@@ -122,7 +122,8 @@ Every non-obvious choice is recorded with its reason and the data behind it in [
 - [ ] Run the agent inside Kubernetes: FastAPI + LangGraph Postgres checkpointer; survives a pod restart mid-approval; agent SLOs
 - [ ] Remediation as Pull Requests to a GitOps repo watched by Argo CD
 - [ ] CI gate: PRs that touch prompts or models run the eval dataset and fail if accuracy drops
-- [ ] RAG over runbooks: pgvector, hybrid search with permissions, recall@5 and faithfulness
+- [ ] Runbook Analyst subagent: RAG over runbooks and postmortems kept in Confluence (D41, D42); pgvector, hybrid search with permissions, recall@5 and faithfulness; similar-incident prefill and recurrence warnings in postmortems
+- [ ] Later, as the agent matures: turn proven runbooks into **agent skills** (a procedure with its allowed tools and verification checks, loaded on demand by name and description); retrieval keeps covering the long tail
 - [ ] AWS signals (CloudWatch) through a read-only MCP server
 - [ ] Prompt-injection cases in the dataset
 
