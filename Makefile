@@ -4,7 +4,7 @@ KCFG_RO := infra/rbac/generated/kubeconfig-agent-readonly
 KCFG_OP := infra/rbac/generated/kubeconfig-agent-operator
 SCENARIOS := crashloop oomkilled imagepullbackoff pending cpu-hog
 
-.PHONY: help cluster-up cluster-stop cluster-delete demo rbac kubeconfig rbac-check scenarios $(addprefix scenario-,$(SCENARIOS)) scenario-bad-rollout scenarios-clean status test test-unit dev budget alert-bad-rollout alert-crashloop alert-oomkilled slack postmortem
+.PHONY: help cluster-up cluster-stop cluster-delete demo rbac kubeconfig rbac-check scenarios $(addprefix scenario-,$(SCENARIOS)) scenario-bad-rollout scenarios-clean status test test-unit dev budget alert-bad-rollout alert-crashloop alert-oomkilled slack postmortem hooks
 
 help: ## Show targets
 	@grep -E '^[a-zA-Z_-]+:.*## ' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  %-22s %s\n", $$1, $$2}'
@@ -72,6 +72,11 @@ postmortem: ## Blameless postmortem draft for a thread: make postmortem T=<threa
 
 slack: ## Slack approval bot (Socket Mode; needs `make dev` and SLACK_* in .env)
 	uv run sre-slack
+
+hooks: ## Install git hooks (commit-msg convention) and the commit template
+	git config core.hooksPath .githooks
+	git config commit.template .gitmessage
+	@echo "commit-msg hook active; see CONTRIBUTING.md#commit-messages"
 
 budget: ## Claude spend so far
 	uv run sre-budget

@@ -14,6 +14,7 @@ Python 3.12 (`uv`) · LangChain v1 `create_agent` + middleware · LangGraph · L
 - **Every change is measurable:** changes to prompts, models, retrieval (chunking, embeddings) or tools are evaluated against the LangSmith dataset with a before/after comparison (accuracy, cost, latency). Run the affected subset first; the full dataset when the change warrants it.
 - **Code quality:** typed Python, `pytest` (tests must not call the LLM), `ruff`.
 - **Small, explained changes.** For larger changes, propose a 3–5 step plan first.
+- **Commits:** Conventional Commits + 50/72, one logical change each; rules in `CONTRIBUTING.md`, enforced by the `commit-msg` hook (`make hooks`).
 - **Language:** code, comments, prompts, docs, commits and README in English.
 - **Architecture decisions** are recorded in `docs/decisions.md`; do not reopen accepted decisions without new evidence.
 

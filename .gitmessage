@@ -1,0 +1,17 @@
+
+# <type>(<scope>)!: <summary>   -> max 72 chars (aim for 50), imperative,
+#                                   lowercase, no period. '!' = breaking.
+#   "If applied, this commit will <summary>"
+#
+# Body (required for feat, fix, perf, refactor, revert): wrap at 72.
+#   - Why is this change needed? What was wrong before?
+#   - What changes in behavior? Side effects, alternatives discarded.
+#   - Evidence for prompt/model/tool changes: eval before/after
+#     (accuracy, cost, latency).
+#
+# Trailers (optional, one per line, after a blank line):
+#   Refs: #12 | Fixes: #12 | BREAKING CHANGE: <what breaks + migration>
+#
+# Types: feat fix perf refactor test eval docs build ci chore revert
+# Scopes: agents alerts budget cli deps evals graph hooks infra k8s llm
+#         middleware postmortem prompts rbac scenarios slack tools

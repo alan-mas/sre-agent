@@ -66,9 +66,17 @@ Evaluated with a LangSmith dataset of 11 reproducible cases: six injected failur
 ~70 offline tests (`make test`) cover tools, middleware, safety invariants and the budget guard without calling the LLM.
 
 ## Quickstart
-Requirements: Docker, kubectl, minikube, [uv](https://docs.astral.sh/uv/), a LangSmith account (free tier) and an Anthropic API key.
+
+### Prerequisites
+- Docker, kubectl, minikube, [uv](https://docs.astral.sh/uv/), a LangSmith account (free tier) and an Anthropic API key.
+- **Git hooks, once per clone:** run `make hooks`.
+
+  Every commit message is checked by a `commit-msg` hook ([rules](CONTRIBUTING.md#commit-messages)). The hook lives in `.githooks/`, which is versioned. By default git only runs hooks from `.git/hooks/`, which is never pushed or cloned. `make hooks` runs `git config core.hooksPath .githooks` so git looks in the versioned folder. It also runs `git config commit.template .gitmessage`, which pre-fills the commit editor with a guide.
+
+  Both settings go to your local `.git/config` and change no tracked file. Git never enables hooks automatically on clone, because a cloned repository could then run code on your machine. That is why this step is manual, and why every hook manager (for example `pre-commit install`) needs one. Check it with `git config --get core.hooksPath` (expected: `.githooks`). Undo it with `git config --unset core.hooksPath`.
 
 ```bash
+make hooks                        # once per clone: enable the commit-msg hook and template
 cp .env.example .env              # ANTHROPIC_API_KEY, LANGSMITH_API_KEY, ...
 make cluster-up                   # local cluster + metrics-server + healthy app + RBAC + short-lived kubeconfigs
 make rbac-check                   # proves the agent can read but not write or read secrets
