@@ -1,0 +1,47 @@
+# cert: [CCA:D2] [LC:deploy]
+# Least-privilege identity for the agent in read-only mode.
+# Deliberately excluded: secrets, configmaps (often hold credentials), any write verb, pods/exec, pods/portforward.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: sre-agent
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: sre-agent-readonly
+  namespace: sre-agent
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: sre-agent-readonly
+rules:
+  - apiGroups: [""]
+    resources: [pods, pods/log, events, services, endpoints, namespaces, nodes, persistentvolumeclaims]
+    verbs: [get, list, watch]
+  - apiGroups: [apps]
+    resources: [deployments, replicasets, statefulsets, daemonsets]
+    verbs: [get, list, watch]
+  - apiGroups: [batch]
+    resources: [jobs, cronjobs]
+    verbs: [get, list, watch]
+  - apiGroups: [events.k8s.io]
+    resources: [events]
+    verbs: [get, list, watch]
+  - apiGroups: [metrics.k8s.io]
+    resources: [pods, nodes]
+    verbs: [get, list]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: sre-agent-readonly
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: sre-agent-readonly
+subjects:
+  - kind: ServiceAccount
+    name: sre-agent-readonly
+    namespace: sre-agent

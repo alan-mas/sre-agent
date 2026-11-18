@@ -1,0 +1,25 @@
+# Slack app for on-call approvals (api.slack.com/apps → Create New App → From a manifest).
+# Socket Mode: the bot connects out to Slack, so the laptop needs no public URL.
+display_information:
+  name: SRE Agent
+  description: Triage alerts, answer questions about the cluster and request on-call approval for fixes
+  background_color: "#1f2937"
+features:
+  bot_user:
+    display_name: sre-agent
+    always_online: true
+oauth_config:
+  scopes:
+    bot:
+      - app_mentions:read  # `@sre-agent <question>`
+      - chat:write
+      - reactions:write    # 👀 while the agent works, ✅ when it answers
+settings:
+  event_subscriptions:
+    bot_events:
+      - app_mention
+  interactivity:
+    is_enabled: true
+  socket_mode_enabled: true
+  org_deploy_enabled: false
+  token_rotation_enabled: false

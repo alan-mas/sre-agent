@@ -1,0 +1,22 @@
+# Expected root cause: process allocates ~150Mi with a 64Mi memory limit -> OOMKilled (exit 137).
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: report-worker
+  namespace: demo
+  labels: {app: report-worker, scenario: oomkilled}
+spec:
+  replicas: 1
+  selector: {matchLabels: {app: report-worker}}
+  template:
+    metadata:
+      labels: {app: report-worker, scenario: oomkilled}
+    spec:
+      containers:
+        - name: worker
+          image: polinux/stress:1.0.4
+          command: ["stress"]
+          args: ["--vm", "1", "--vm-bytes", "150M", "--vm-hang", "1"]
+          resources:
+            requests: {cpu: 10m, memory: 32Mi}
+            limits: {cpu: 100m, memory: 64Mi}

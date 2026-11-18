@@ -1,0 +1,42 @@
+{
+  "version": "4",
+  "groupKey": "{}:{alertname=\"KubePodCrashLooping\"}",
+  "truncatedAlerts": 0,
+  "status": "firing",
+  "receiver": "sre-agent",
+  "groupLabels": {
+    "alertname": "KubePodCrashLooping"
+  },
+  "commonLabels": {
+    "alertname": "KubePodCrashLooping",
+    "severity": "critical",
+    "namespace": "demo",
+    "pod": "payments-api",
+    "container": "api"
+  },
+  "commonAnnotations": {
+    "summary": "Pod is crash looping.",
+    "description": "Pod demo/payments-api (api) is in waiting state (reason: CrashLoopBackOff)."
+  },
+  "externalURL": "http://alertmanager.local",
+  "alerts": [
+    {
+      "status": "firing",
+      "labels": {
+        "alertname": "KubePodCrashLooping",
+        "severity": "critical",
+        "namespace": "demo",
+        "pod": "payments-api",
+        "container": "api"
+      },
+      "annotations": {
+        "summary": "Pod is crash looping.",
+        "description": "Pod demo/payments-api (api) is in waiting state (reason: CrashLoopBackOff)."
+      },
+      "startsAt": "2026-10-19T18:00:00Z",
+      "endsAt": "0001-01-01T00:00:00Z",
+      "generatorURL": "http://prometheus.local/graph",
+      "fingerprint": "0000000000000000"
+    }
+  ]
+}

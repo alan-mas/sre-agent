@@ -1,0 +1,42 @@
+# cert: [CCA:D2] [LC:deploy]
+# Write identity for HITL-approved actions. Separate from the read-only identity on purpose:
+# - namespaced Role + RoleBinding (only `demo`), so Kubernetes itself enforces the scope;
+# - only the verbs the 4 action tools need; no create, no secrets, no exec, no delete of deployments.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: sre-agent-operator
+  namespace: sre-agent
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: sre-agent-operator
+  namespace: demo
+rules:
+  - apiGroups: [""]
+    resources: [pods]
+    verbs: [get, list, delete]             # restart_pod (controller recreates it)
+  - apiGroups: [apps]
+    resources: [deployments]
+    verbs: [get, list, patch]              # rollout_restart, rollout_undo
+  - apiGroups: [apps]
+    resources: [deployments/scale]
+    verbs: [get, patch]                    # scale_deployment
+  - apiGroups: [apps]
+    resources: [replicasets]
+    verbs: [get, list]                     # rollout_undo reads the previous revision's template
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: sre-agent-operator
+  namespace: demo
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: sre-agent-operator
+subjects:
+  - kind: ServiceAccount
+    name: sre-agent-operator
+    namespace: sre-agent

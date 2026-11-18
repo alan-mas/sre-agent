@@ -1,0 +1,42 @@
+{
+  "version": "4",
+  "groupKey": "{}:{alertname=\"KubeContainerOOMKilled\"}",
+  "truncatedAlerts": 0,
+  "status": "firing",
+  "receiver": "sre-agent",
+  "groupLabels": {
+    "alertname": "KubeContainerOOMKilled"
+  },
+  "commonLabels": {
+    "alertname": "KubeContainerOOMKilled",
+    "severity": "warning",
+    "namespace": "demo",
+    "pod": "report-worker",
+    "container": "worker"
+  },
+  "commonAnnotations": {
+    "summary": "Container was OOMKilled.",
+    "description": "Container worker in pod demo/report-worker has been OOMKilled repeatedly in the last hour."
+  },
+  "externalURL": "http://alertmanager.local",
+  "alerts": [
+    {
+      "status": "firing",
+      "labels": {
+        "alertname": "KubeContainerOOMKilled",
+        "severity": "warning",
+        "namespace": "demo",
+        "pod": "report-worker",
+        "container": "worker"
+      },
+      "annotations": {
+        "summary": "Container was OOMKilled.",
+        "description": "Container worker in pod demo/report-worker has been OOMKilled repeatedly in the last hour."
+      },
+      "startsAt": "2026-10-19T18:00:00Z",
+      "endsAt": "0001-01-01T00:00:00Z",
+      "generatorURL": "http://prometheus.local/graph",
+      "fingerprint": "0000000000000000"
+    }
+  ]
+}

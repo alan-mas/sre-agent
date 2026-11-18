@@ -1,0 +1,20 @@
+# Expected root cause: image tag does not exist -> ErrImagePull / ImagePullBackOff.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: checkout-web
+  namespace: demo
+  labels: {app: checkout-web, scenario: imagepullbackoff}
+spec:
+  replicas: 1
+  selector: {matchLabels: {app: checkout-web}}
+  template:
+    metadata:
+      labels: {app: checkout-web, scenario: imagepullbackoff}
+    spec:
+      containers:
+        - name: web
+          image: ghcr.io/stefanprodan/podinfo:9.9.9-does-not-exist
+          resources:
+            requests: {cpu: 10m, memory: 32Mi}
+            limits: {cpu: 100m, memory: 64Mi}

@@ -1,0 +1,21 @@
+# Expected root cause: requests 16 CPUs; node allocatable is 10 (docker driver exposes the VM CPUs) -> FailedScheduling (Insufficient cpu).
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ml-batch
+  namespace: demo
+  labels: {app: ml-batch, scenario: pending}
+spec:
+  replicas: 1
+  selector: {matchLabels: {app: ml-batch}}
+  template:
+    metadata:
+      labels: {app: ml-batch, scenario: pending}
+    spec:
+      containers:
+        - name: trainer
+          image: busybox:1.36
+          command: ["sleep", "infinity"]
+          resources:
+            requests: {cpu: "16", memory: 64Mi}
+            limits: {cpu: "16", memory: 128Mi}
