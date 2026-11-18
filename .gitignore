@@ -1,0 +1,35 @@
+# Secrets & local config
+.env
+.budget/
+*.kubeconfig
+kubeconfig-*
+infra/**/generated/
+
+# Personal / third-party docs (do not publish)
+*.docx
+exam_guide.pdf
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+
+# LangGraph local server
+.langgraph_api/
+*.sqlite
+*.db
+
+# OS / IDE
+.DS_Store
+.idea/
+.vscode/
+
+# Local server logs
+.logs/
+
+# Private, local-only (Spanish notes, plan, interview prep, personal docs)
+/local
+CLAUDE.local.md

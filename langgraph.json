@@ -1,0 +1,9 @@
+{
+  "dependencies": ["."],
+  "graphs": {
+    "sre_lean": "./src/sre_agent/graph.py:sre_lean",
+    "sre_single": "./src/sre_agent/graph.py:sre_single"
+  },
+  "env": ".env",
+  "python_version": "3.12"
+}

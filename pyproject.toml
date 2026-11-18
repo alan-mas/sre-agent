@@ -1,0 +1,38 @@
+[project]
+name = "sre-agent"
+version = "0.1.0"
+description = "SRE multi-agent PoC for Kubernetes triage (LangChain + Claude + LangSmith)"
+readme = "README.md"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "kubernetes>=37.0.1",
+    "langchain>=1.4.6",
+    "langchain-anthropic>=1.7.6",
+    "langgraph>=1.2.16",
+    "langgraph-cli[inmem]>=0.4.36",
+    "langsmith>=0.14.11",
+    "python-dotenv>=1.2.4",
+    "slack-bolt>=1.30.0",
+]
+
+[project.scripts]
+sre-agent = "sre_agent:main"
+sre-budget = "sre_agent.budget:main"
+sre-ask = "sre_agent.cli:main"
+sre-alert = "sre_agent.alerts:main"
+sre-eval = "sre_agent.evals:main"
+sre-slack = "sre_agent.slack:main"
+sre-postmortem = "sre_agent.postmortem:main"
+
+[build-system]
+requires = ["uv_build>=0.12.19,<0.13.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+    "ruff>=0.17.1",
+]
+
+[tool.pytest.ini_options]
+markers = ["cluster: integration tests against the local minikube lab (0 tokens)"]
