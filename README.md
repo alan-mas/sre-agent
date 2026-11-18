@@ -71,9 +71,9 @@ Evaluated with a LangSmith dataset of 11 reproducible cases: six injected failur
 - Docker, kubectl, minikube, [uv](https://docs.astral.sh/uv/), a LangSmith account (free tier) and an Anthropic API key.
 - **Git hooks, once per clone:** run `make hooks`.
 
-  Every commit message is checked by a `commit-msg` hook ([rules](CONTRIBUTING.md#commit-messages)). The hook lives in `.githooks/`, which is versioned. By default git only runs hooks from `.git/hooks/`, which is never pushed or cloned. `make hooks` runs `git config core.hooksPath .githooks` so git looks in the versioned folder. It also runs `git config commit.template .gitmessage`, which pre-fills the commit editor with a guide.
+  Every commit message is checked by a `commit-msg` hook ([rules](CONTRIBUTING.md#commit-messages)), and a `pre-push` hook flags unpushed commits that should be squashed ([rules](CONTRIBUTING.md#squash-before-you-push)). The hooks live in `.githooks/`, which is versioned. By default git only runs hooks from `.git/hooks/`, which is never pushed or cloned. `make hooks` runs `git config core.hooksPath .githooks` so git looks in the versioned folder. It also runs `git config commit.template .gitmessage`, which pre-fills the commit editor with a guide, and `git config rebase.autoSquash true`.
 
-  Both settings go to your local `.git/config` and change no tracked file. Git never enables hooks automatically on clone, because a cloned repository could then run code on your machine. That is why this step is manual, and why every hook manager (for example `pre-commit install`) needs one. Check it with `git config --get core.hooksPath` (expected: `.githooks`). Undo it with `git config --unset core.hooksPath`.
+  These settings go to your local `.git/config` and change no tracked file. Git never enables hooks automatically on clone, because a cloned repository could then run code on your machine. That is why this step is manual, and why every hook manager (for example `pre-commit install`) needs one. Check it with `git config --get core.hooksPath` (expected: `.githooks`). Undo it with `git config --unset core.hooksPath`.
 
 ```bash
 make hooks                        # once per clone: enable the commit-msg hook and template

@@ -73,10 +73,11 @@ postmortem: ## Blameless postmortem draft for a thread: make postmortem T=<threa
 slack: ## Slack approval bot (Socket Mode; needs `make dev` and SLACK_* in .env)
 	uv run sre-slack
 
-hooks: ## Install git hooks (commit-msg convention) and the commit template
+hooks: ## Install git hooks (commit-msg convention, pre-push squash check) and the commit template
 	git config core.hooksPath .githooks
 	git config commit.template .gitmessage
-	@echo "commit-msg hook active; see CONTRIBUTING.md#commit-messages"
+	git config rebase.autoSquash true
+	@echo "commit-msg and pre-push hooks active; see CONTRIBUTING.md"
 
 budget: ## Claude spend so far
 	uv run sre-budget

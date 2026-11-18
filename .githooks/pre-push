@@ -1,0 +1,7 @@
+#!/bin/sh
+# Flag unpushed commits that should be squashed (CONTRIBUTING.md#squash-before-you-push).
+# git passes "<local ref> <local sha> <remote ref> <remote sha>" lines on stdin.
+root=$(git rev-parse --show-toplevel)
+py="$root/.venv/bin/python"
+[ -x "$py" ] || py=python3
+exec "$py" "$root/scripts/check_squash.py" "$@"

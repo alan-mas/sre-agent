@@ -1,8 +1,9 @@
 # Contributing
 
 Run `make hooks` once after cloning. It sets `core.hooksPath=.githooks` (a
-`commit-msg` hook that validates every message) and `commit.template=.gitmessage`
-(a guide shown when you run `git commit` without `-m`).
+`commit-msg` hook that validates every message and a `pre-push` hook that flags
+commits to squash), `commit.template=.gitmessage` (a guide shown when you run
+`git commit` without `-m`) and `rebase.autoSquash=true`.
 
 ## Commits
 
@@ -12,6 +13,33 @@ Run `make hooks` once after cloning. It sets `core.hooksPath=.githooks` (a
   (accuracy, cost, latency before/after), per the project rules.
 - Fixup commits (`git commit --fixup <sha>`) are fine while iterating; squash them
   (`git rebase --autosquash`) before merging.
+
+## Squash before you push
+
+A commit is one self-contained logical change that ships with its tests and docs
+([Google](https://google.github.io/eng-practices/review/developer/small-cls.html),
+[Linux](https://docs.kernel.org/process/submitting-patches.html),
+[Django](https://docs.djangoproject.com/en/dev/internals/contributing/committing-code/)).
+Clean up local history before sharing it; never rewrite pushed commits
+([git-rebase](https://git-scm.com/docs/git-rebase)).
+
+| Squash (one change) | Keep separate (different changes) |
+|---|---|
+| A fix, typo or review tweak to an unpushed commit | A refactor and the feature built on it |
+| Docs or tests for a change you just committed | A bug fix and an unrelated feature |
+| A revert of an unpushed commit (drop both) | Independent changes that each stand alone |
+| Same `type(scope)` on the same files | Changes that are already pushed |
+
+While iterating, commit fixes with `git commit --fixup <sha>`; `make hooks` sets
+`rebase.autoSquash`, so `git rebase -i origin/main` folds them in.
+
+The `pre-push` hook checks only unpushed commits:
+
+| Level | When | Effect |
+|---|---|---|
+| `error` | `fixup!`/`squash!`/`amend!` commits left | blocks: autosquash first |
+| `squash` | a commit reverts, repeats (`type(scope)` + files) or documents/tests an earlier unpushed one (mentions its files or the ids it added, e.g. `D41`) | blocks; `SQUASH_OK=1 git push` to push as is |
+| `consider` | consecutive `docs`/`chore` commits | hint only |
 
 ## Commit messages
 
