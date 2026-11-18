@@ -33,3 +33,6 @@ __pycache__/
 # Private, local-only (Spanish notes, plan, interview prep, personal docs)
 /local
 CLAUDE.local.md
+
+# Claude Code personal settings (hooks, status line)
+.claude/settings.local.json
