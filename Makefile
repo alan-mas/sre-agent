@@ -4,10 +4,12 @@ KCFG_RO := infra/rbac/generated/kubeconfig-agent-readonly
 KCFG_OP := infra/rbac/generated/kubeconfig-agent-operator
 SCENARIOS := crashloop oomkilled imagepullbackoff pending cpu-hog
 
+include lab/lab.mk
+
 .PHONY: help cluster-up cluster-stop cluster-delete demo rbac kubeconfig rbac-check scenarios $(addprefix scenario-,$(SCENARIOS)) scenario-bad-rollout scenarios-clean status test test-unit dev budget alert-bad-rollout alert-crashloop alert-oomkilled slack postmortem hooks
 
 help: ## Show targets
-	@grep -E '^[a-zA-Z_-]+:.*## ' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  %-22s %s\n", $$1, $$2}'
+	@grep -hE '^[a-zA-Z_-]+:.*## ' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  %-22s %s\n", $$1, $$2}'
 
 cluster-up: ## Start minikube (+metrics-server), demo app and read-only RBAC
 	PROFILE=$(PROFILE) infra/minikube/up.sh

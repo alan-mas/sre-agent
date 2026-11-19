@@ -105,7 +105,7 @@ src/sre_agent/
 ├── evals.py       # LangSmith dataset, code evaluators + LLM judge
 ├── budget.py      # monthly spend guard
 └── llm.py         # single model factory
-lab/               # the system under test, no API keys: healthy app, failure scenarios (kind cluster next)
+lab/               # the system under test, no API keys: kind cluster (make lab-up), Gateway API, healthy app, failure scenarios
 infra/             # cluster scripts, RBAC, alert payloads, Slack manifest
 docs/              # decisions, scenarios, demo
 ```

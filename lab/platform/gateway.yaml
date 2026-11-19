@@ -1,0 +1,53 @@
+# Shared entry point for lab apps: Gateway API served by Envoy Gateway.
+# ingress-nginx was retired in March 2026; Gateway API is its replacement.
+# Apps attach with an HTTPRoute whose parentRef is lab-system/lab.
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: EnvoyProxy
+metadata:
+  name: lab-proxy
+  namespace: lab-system
+spec:
+  provider:
+    type: Kubernetes
+    kubernetes:
+      envoyService:
+        type: NodePort
+        # Envoy Gateway defaults to Local, which drops NodePort traffic on nodes
+        # without an Envoy pod; kind maps the host port to the control plane only.
+        externalTrafficPolicy: Cluster
+        # Fixed node ports so kind's extraPortMappings reach the proxy.
+        # Service ports merge by port number (the listener port).
+        patch:
+          type: StrategicMerge
+          value:
+            spec:
+              ports:
+                - port: 80
+                  nodePort: 30080
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: GatewayClass
+metadata:
+  name: lab
+spec:
+  controllerName: gateway.envoyproxy.io/gatewayclass-controller
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: lab
+  namespace: lab-system
+spec:
+  gatewayClassName: lab
+  infrastructure:
+    parametersRef:
+      group: gateway.envoyproxy.io
+      kind: EnvoyProxy
+      name: lab-proxy
+  listeners:
+    - name: http
+      protocol: HTTP
+      port: 80
+      allowedRoutes:
+        namespaces:
+          from: All
