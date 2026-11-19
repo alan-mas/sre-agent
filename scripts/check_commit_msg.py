@@ -37,7 +37,7 @@ TYPES = {
 BODY_REQUIRED = {"feat", "fix", "perf", "refactor", "revert"}
 KNOWN_SCOPES = {
     "agents", "alerts", "budget", "cli", "deps", "evals", "graph", "hooks",
-    "infra", "k8s", "llm", "middleware", "postmortem", "prompts", "rbac",
+    "infra", "k8s", "lab", "llm", "middleware", "postmortem", "prompts", "rbac",
     "scenarios", "slack", "tools",
 }  # fmt: skip
 

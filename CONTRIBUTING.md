@@ -57,7 +57,7 @@ and the 50/72 rule from [git-commit](https://git-scm.com/docs/git-commit#_discus
 | Part | Rule | Enforced |
 |---|---|---|
 | type | `feat` `fix` `perf` `refactor` `test` `eval` `docs` `build` `ci` `chore` `revert` | error |
-| scope | optional, lowercase kebab-case: `agents` `alerts` `budget` `cli` `deps` `evals` `graph` `hooks` `infra` `k8s` `llm` `middleware` `postmortem` `prompts` `rbac` `scenarios` `slack` `tools` | error if malformed, warning if new |
+| scope | optional, lowercase kebab-case: `agents` `alerts` `budget` `cli` `deps` `evals` `graph` `hooks` `infra` `k8s` `lab` `llm` `middleware` `postmortem` `prompts` `rbac` `scenarios` `slack` `tools` | error if malformed, warning if new |
 | `!` | breaking change; the body must explain the migration | error without a body |
 | summary | imperative ("If applied, this commit will _&lt;summary&gt;_"), lowercase start, no trailing period, at least two words, not vague (`update`, `wip`, `fix`) | error |
 | header length | aim for 50 characters, hard limit 72 | warning / error |
