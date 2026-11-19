@@ -117,7 +117,7 @@ Every non-obvious choice is recorded with its reason and the data behind it in [
 - [Configuration changes are routed as change requests, never applied](docs/decision-config-changes.md)
 
 ## Roadmap
-- [ ] Move the failure scenarios to a shared kind cluster from a separate public lab repo (`sre-incident-lab`)
+- [ ] Move the failure scenarios to a kind cluster defined in `lab/` (D43): one namespace per scenario, demo app, load tests
 - [ ] Evals with ≥15 scenarios × 3 runs: accuracy with variance, trajectory evaluator, cost and latency
 - [ ] Run the agent inside Kubernetes: FastAPI + LangGraph Postgres checkpointer; survives a pod restart mid-approval; agent SLOs
 - [ ] Remediation as Pull Requests to a GitOps repo watched by Argo CD

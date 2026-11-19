@@ -98,8 +98,11 @@ The shared vocabulary of this project. Code, prompts, docs, evals and commits us
 
 ## Repositories
 
-**Operator** (`sre-agent`)
-: This repo: the agent that investigates and proposes.
+**Agent** (`src/`)
+: The operator: investigates and proposes.
 
-**Lab** (`sre-incident-lab`, *planned*)
-: The system being operated: cluster, demo app, scenarios and runbooks. The agent changes it only through Pull Requests (D37).
+**Lab** (`lab/`)
+: The system being operated: kind cluster, demo app, scenarios and load tests. It needs no API keys (D43).
+
+**GitOps repo** (*planned*)
+: A separate repo with the desired cluster state, watched by Argo CD. The agent changes the cluster's configuration only through Pull Requests there (D43).
