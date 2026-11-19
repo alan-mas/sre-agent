@@ -20,7 +20,7 @@ cluster-delete: ## Delete minikube profile
 	PROFILE=$(PROFILE) infra/minikube/down.sh --delete
 
 demo: ## Deploy the healthy baseline app (podinfo)
-	kubectl apply -f infra/demo/podinfo.yaml
+	kubectl apply -f lab/demo/podinfo.yaml
 	kubectl rollout status deploy/podinfo -n demo --timeout=180s
 
 rbac: ## Apply read-only (cluster-wide) and operator (demo only) identities
@@ -42,12 +42,12 @@ rbac-check: ## Prove what each agent identity can and cannot do
 scenarios: $(addprefix scenario-,$(SCENARIOS)) scenario-bad-rollout ## Inject every failure scenario
 
 $(addprefix scenario-,$(SCENARIOS)): scenario-%:
-	kubectl apply -f infra/scenarios/$*.yaml
+	kubectl apply -f lab/scenarios/$*.yaml
 
 scenario-bad-rollout: ## Deploy orders-api v1, wait, then roll out broken v2
-	kubectl apply -f infra/scenarios/bad-rollout-v1.yaml
+	kubectl apply -f lab/scenarios/bad-rollout-v1.yaml
 	kubectl rollout status deploy/orders-api -n demo --timeout=180s
-	kubectl apply -f infra/scenarios/bad-rollout-v2.yaml
+	kubectl apply -f lab/scenarios/bad-rollout-v2.yaml
 
 scenarios-clean: ## Remove all failure scenarios (keeps podinfo)
 	kubectl delete deploy -n demo -l 'scenario,scenario!=healthy' --ignore-not-found

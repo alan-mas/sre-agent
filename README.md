@@ -105,7 +105,8 @@ src/sre_agent/
 ├── evals.py       # LangSmith dataset, code evaluators + LLM judge
 ├── budget.py      # monthly spend guard
 └── llm.py         # single model factory
-infra/             # cluster scripts, RBAC, healthy app, failure scenarios, alert payloads, Slack manifest
+lab/               # the system under test, no API keys: healthy app, failure scenarios (kind cluster next)
+infra/             # cluster scripts, RBAC, alert payloads, Slack manifest
 docs/              # decisions, scenarios, demo
 ```
 Modules carry `# cert:` tags that map them to the agent-engineering concepts they exercise (e.g. `grep -rn "LC:test" src`).
