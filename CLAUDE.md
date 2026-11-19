@@ -13,6 +13,7 @@ Python 3.12 (`uv`) · LangChain v1 `create_agent` + middleware · LangGraph · L
 - **Every model is built with `sre_agent.llm.make_model()`** (never `ChatAnthropic` directly): it attaches the monthly budget guard. Check spend with `uv run sre-budget`; never delete `.budget/` ledgers.
 - **Every change is measurable:** changes to prompts, models, retrieval (chunking, embeddings) or tools are evaluated against the LangSmith dataset with a before/after comparison (accuracy, cost, latency). Run the affected subset first; the full dataset when the change warrants it.
 - **Code quality:** typed Python, `pytest` (tests must not call the LLM), `ruff`.
+- **Vocabulary:** use terms as defined in `GLOSSARY.md`; add new domain terms there first.
 - **Small, explained changes.** For larger changes, propose a 3–5 step plan first.
 - **Commits:** Conventional Commits + 50/72, one logical change each; rules in `CONTRIBUTING.md`, enforced by the `commit-msg` hook; the `pre-push` hook flags unpushed commits to squash (`make hooks`).
 - **Language:** code, comments, prompts, docs, commits and README in English.
