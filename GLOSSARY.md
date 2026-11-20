@@ -96,6 +96,32 @@ The shared vocabulary of this project. Code, prompts, docs, evals and commits us
 **Budget ledger**
 : The monthly spend record (`.budget/ledger-YYYY-MM.json`). Every model call checks it before running; the cap is $15 per month (D36). Check spend with `uv run sre-budget`.
 
+## Knowledge retrieval (*planned*, D41/D42)
+
+**Knowledge base**
+: The runbooks and postmortems the Runbook Analyst searches. In the lab it is synthetic Markdown under `lab/knowledge/`, labeled as such; Confluence is the planned source of truth (D42).
+
+**Distractor**
+: A document in the knowledge base about a different problem that shares vocabulary with a real one (e.g. a DNS outage that also shows "connection refused"). It makes retrieval measurably hard instead of trivially easy.
+
+**Chunk**
+: The unit that is indexed and retrieved: a piece of a document (here, a Markdown section with its heading path), not the whole document.
+
+**Embedding**
+: A vector that represents the meaning of a text, so that similar texts are close to each other. Used for semantic (vector) search.
+
+**Hybrid search**
+: Combining vector search with keyword (full-text) search and fusing the two rankings, so exact terms such as error codes or alert names are not lost. *Not* reranking, which reorders one result list with a second model.
+
+**Retrieval query set**
+: Labeled queries (alert-style and SRE-question-style) with the documents that should be retrieved for each. The ground truth for retrieval evals, separate from the agent's eval dataset.
+
+**Recall@k**
+: The share of queries for which a relevant document appears in the top *k* results.
+
+**MRR** (mean reciprocal rank)
+: The average of 1/rank of the first relevant result per query (1.0 = always first). Rewards putting the right document at the top, not just somewhere in the top *k*.
+
 ## Repositories
 
 **Agent** (`src/`)
