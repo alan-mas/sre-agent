@@ -60,12 +60,9 @@ def test_snapshot_ground_truth(snap):
 
 def test_snapshot_rollout_and_saturation(snap):
     assert [d["name"] for d in snap["stalled_rollouts"]] == ["orders-api"]
-    assert set(snap["deployments_down"]) == {
-        "payments-api",
-        "report-worker",
-        "checkout-web",
-        "ml-batch",
-    }
+    down = set(snap["deployments_down"])
+    expected = {"payments-api", "report-worker", "checkout-web", "ml-batch"}
+    assert expected <= down and down - expected <= {"billing-api"}  # + `make break-dns`
     assert any(
         c.get("pod", "").startswith("search-indexer") and c["flag"] == "cpu_throttled"
         for c in snap["saturated_containers"]
