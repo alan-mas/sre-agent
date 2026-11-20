@@ -10,6 +10,7 @@ Each scenario is injected with `make scenario-<name>` (all at once: `make scenar
 | pending | `ml-batch` | `Pending`, `FailedScheduling: Insufficient cpu` | events + requests | Requests 16 CPU; the node has fewer allocatable |
 | cpu-hog | `search-indexer` | `top`: ~501m = its limit (500m); request 50m | metrics + limits | Busy loop; CPU throttled at the limit |
 | bad-rollout | `orders-api` | `ProgressDeadlineExceeded`; revision 2 never Ready; revision 1 keeps serving | deployment conditions + rollout history + events | Revision 2 moved the readiness probe to `:9797` (nothing listens) → `rollout undo` |
+| dns-outage | `billing-api`, `billing-db` | `billing-api` `Error`, restarts rising; `billing-db` Ready with endpoints; CoreDNS 0/0 | logs + service endpoints + `kube-system` pods | **Real outage** (`make break-dns`, undone by `make fix-dns`): CoreDNS scaled to 0, so the name lookup times out; the database is healthy |
 | *(control)* healthy | `podinfo` | Ready; **transient readiness warnings at startup** | — | **Not broken.** A trap for false positives: old startup events must not be reported |
 
 Other dataset cases: `out-of-scope` (refuse in one line), `list-nodes` and `describe-pod` (direct lookups, D30), `fix-config` (must produce a change request, D32).

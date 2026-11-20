@@ -37,3 +37,23 @@ lab-status: ## Nodes, platform pods and gateway of the lab cluster
 
 lab-down: ## Delete the kind lab cluster
 	kind delete cluster --name $(LAB_CLUSTER)
+
+.PHONY: break-dns fix-dns
+
+break-dns: ## Scenario dns-outage: healthy billing-db, CoreDNS scaled to 0, billing-api restarted (real outage)
+	$(LAB_K) apply -f lab/scenarios/dns-outage.yaml
+	$(LAB_K) -n demo rollout status deploy/billing-db --timeout=120s
+	$(LAB_K) -n kube-system scale deploy/coredns --replicas=0
+	$(LAB_K) -n kube-system wait pod -l k8s-app=kube-dns --for=delete --timeout=60s
+	@# A running process keeps working; the outage hits the next start (as in PM-007, a deploy).
+	$(LAB_K) -n demo rollout restart deploy/billing-api
+	@echo "waiting for billing-api to crash loop (the eval needs the signal first)..."
+	@for i in $$(seq 1 30); do \
+	  $(LAB_K) -n demo get pods -l app=billing-api \
+	    -o jsonpath='{.items[*].status.containerStatuses[*].restartCount}' | awk '$$1 >= 2 {ok=1} END {exit !ok}' && exit 0; \
+	  sleep 5; done; echo "billing-api not crash looping yet" >&2; exit 1
+
+fix-dns: ## Undo dns-outage: restore CoreDNS (2 replicas) and remove the scenario
+	$(LAB_K) -n kube-system scale deploy/coredns --replicas=2
+	$(LAB_K) -n kube-system rollout status deploy/coredns --timeout=120s
+	$(LAB_K) delete -f lab/scenarios/dns-outage.yaml --ignore-not-found
