@@ -25,8 +25,8 @@ Detected the next morning by the ML team. Time to detect: 9 h.
 
 ## Timeline (UTC)
 - 22:00 Job created; pods `Pending`.
-- 07:00 ML team notices; on-call compares the 16 CPU request with ~4 allocatable per node.
-- 07:30 Change request with a request of 3 CPU merged; job runs at 08:00.
+- 07:00 (+1d) ML team notices; on-call compares the 16 CPU request with ~4 allocatable per node.
+- 07:30 (+1d) Change request with a request of 3 CPU merged; job runs at 08:00.
 
 ## Root cause
 Resource requests copied from another environment without checking the target cluster's node sizes.

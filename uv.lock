@@ -1357,6 +1357,7 @@ dependencies = [
     { name = "langgraph-cli", extra = ["inmem"] },
     { name = "langsmith" },
     { name = "python-dotenv" },
+    { name = "pyyaml" },
     { name = "slack-bolt" },
 ]
 
@@ -1375,6 +1376,7 @@ requires-dist = [
     { name = "langgraph-cli", extras = ["inmem"], specifier = ">=0.4.36" },
     { name = "langsmith", specifier = ">=0.14.11" },
     { name = "python-dotenv", specifier = ">=1.2.4" },
+    { name = "pyyaml", specifier = ">=6.0.3" },
     { name = "slack-bolt", specifier = ">=1.30.0" },
 ]
 

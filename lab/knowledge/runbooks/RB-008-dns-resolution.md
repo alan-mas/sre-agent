@@ -18,7 +18,7 @@ Pods cannot resolve service names. Symptoms in application logs: `no such host`,
 ## Triage
 1. Check CoreDNS: `kubectl -n kube-system get pods -l k8s-app=kube-dns` and its logs.
 2. Resolve from a debug pod:
-   `kubectl run dnsutils --rm -it --image=registry.k8s.io/e2e-test-images/agnhost:2.39 -- nslookup <svc>.<ns>.svc.cluster.local`
+   `kubectl run dnsutils --rm -it --image=registry.k8s.io/e2e-test-images/agnhost:2.39 -- nslookup <svc>.<ns>.svc.cluster.local` (creates a temporary pod: needs approval)
 3. Distinguish DNS from the dependency: if the Service has endpoints (`kubectl -n <ns> get endpoints <svc>`) and the IP answers, but the name does not resolve, it is DNS.
 
 ## Common causes

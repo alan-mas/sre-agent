@@ -12,6 +12,7 @@ dependencies = [
     "langgraph-cli[inmem]>=0.4.36",
     "langsmith>=0.14.11",
     "python-dotenv>=1.2.4",
+    "pyyaml>=6.0.3",
     "slack-bolt>=1.30.0",
 ]
 
@@ -23,6 +24,7 @@ sre-alert = "sre_agent.alerts:main"
 sre-eval = "sre_agent.evals:main"
 sre-slack = "sre_agent.slack:main"
 sre-postmortem = "sre_agent.postmortem:main"
+sre-doc-lint = "sre_agent.knowledge.lint:main"
 
 [build-system]
 requires = ["uv_build>=0.12.19,<0.13.0"]
