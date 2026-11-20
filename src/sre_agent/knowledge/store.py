@@ -20,6 +20,10 @@ from sre_agent.knowledge.embed import EMBED_DIM
 DEFAULT_DSN = "postgresql://sre@127.0.0.1:5433/kb"
 RRF_K = 60  # standard reciprocal-rank-fusion constant
 CANDIDATES = 20  # results taken from each ranking before fusion
+# Retrieval defaults chosen by the retrieval eval (D46).
+DEFAULT_VARIANT = "fixed"
+DEFAULT_MODE = "hybrid"
+DEFAULT_MAX_PER_DOC = 1
 
 SCHEMA = f"""
 CREATE EXTENSION IF NOT EXISTS vector;
@@ -157,10 +161,10 @@ def search(
     conn: psycopg.Connection,
     query: str,
     *,
-    variant: str = "section",
-    mode: str = "hybrid",
+    variant: str = DEFAULT_VARIANT,
+    mode: str = DEFAULT_MODE,
     k: int = 5,
-    max_per_doc: int | None = None,
+    max_per_doc: int | None = DEFAULT_MAX_PER_DOC,
     embed_query: Callable[[str], list[float]] | None = None,
 ) -> list[Hit]:
     """Top-k chunks for a query. mode: vector | keyword | hybrid.

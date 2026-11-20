@@ -10,6 +10,7 @@ from sre_agent.knowledge import KB_DIR
 from sre_agent.knowledge.chunking import STRATEGIES
 from sre_agent.knowledge.docs import load_dir
 from sre_agent.knowledge.lint import lint_dir
+from sre_agent.knowledge.store import DEFAULT_MAX_PER_DOC, DEFAULT_MODE, DEFAULT_VARIANT
 
 
 def ingest_main() -> None:
@@ -51,10 +52,17 @@ def ingest_main() -> None:
 def search_main() -> None:
     p = argparse.ArgumentParser(description="Search the knowledge base.")
     p.add_argument("query")
-    p.add_argument("--mode", choices=["hybrid", "vector", "keyword"], default="hybrid")
-    p.add_argument("--variant", choices=sorted(STRATEGIES), default="section")
+    p.add_argument(
+        "--mode", choices=["hybrid", "vector", "keyword"], default=DEFAULT_MODE
+    )
+    p.add_argument("--variant", choices=sorted(STRATEGIES), default=DEFAULT_VARIANT)
     p.add_argument("-k", type=int, default=5)
-    p.add_argument("--max-per-doc", type=int, default=None)
+    p.add_argument(
+        "--max-per-doc",
+        type=int,
+        default=DEFAULT_MAX_PER_DOC,
+        help="0 = no cap",
+    )
     args = p.parse_args()
 
     from sre_agent.knowledge.store import connect, search
@@ -66,7 +74,7 @@ def search_main() -> None:
             variant=args.variant,
             mode=args.mode,
             k=args.k,
-            max_per_doc=args.max_per_doc,
+            max_per_doc=args.max_per_doc or None,
         ):
             print(f"{h.score:.4f}  {h.doc_id:7} {h.heading[:30]:30}  {h.title}")
 
