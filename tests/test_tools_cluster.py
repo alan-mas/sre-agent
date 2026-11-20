@@ -53,7 +53,9 @@ def test_snapshot_ground_truth(snap):
     assert issues.get("ml-batch") == "Unschedulable"
     assert issues.get("orders-api") == "NotReady"
     assert "podinfo" not in issues  # healthy control: no false positive
-    assert "podinfo" in snap["deployments_ok"]  # eval finding (D22): absent from issues was misread as "does not exist"
+    assert (
+        "podinfo" in snap["deployments_ok"]
+    )  # eval finding (D22): absent from issues was misread as "does not exist"
 
 
 def test_snapshot_rollout_and_saturation(snap):
@@ -94,7 +96,7 @@ def test_rollout_history_exposes_probe_change():
 def test_guardrails():
     from sre_agent.tools.inspector import describe_pod, get_pods
 
-    assert "not allowed" in get_pods.invoke({"namespace": "kube-system"})
+    assert "not allowed" in get_pods.invoke({"namespace": "kube-public"})
     assert describe_pod.invoke({"namespace": "demo", "name": "nope"}).startswith(
         "error: 404"
     )

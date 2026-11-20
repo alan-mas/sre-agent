@@ -2,6 +2,8 @@
 
 import re
 
+import pytest
+
 from sre_agent import prompts
 from sre_agent.agents import build_lean_agent, build_single_agent
 from sre_agent.middleware import commander_stack, single_agent_stack, specialist_stack
@@ -94,3 +96,15 @@ def test_write_identity_is_only_reachable_from_gated_tools():
             ), path
     defined = {v.name for v in vars(actions).values() if isinstance(v, BaseTool)}
     assert defined == ACTIONS
+
+
+def test_kube_system_is_readable_but_never_writable(monkeypatch):
+    """D47: reads may include kube-system (CoreDNS, kube-proxy); writes there are refused even if allowlisted."""
+    from sre_agent.k8s_client import NamespaceNotAllowedError, check_namespace
+
+    monkeypatch.setenv("AGENT_NAMESPACE_ALLOWLIST", "demo,kube-system")
+    assert check_namespace("kube-system") == "kube-system"
+    with pytest.raises(NamespaceNotAllowedError, match="protected"):
+        check_namespace("kube-system", write=True)
+    with pytest.raises(NamespaceNotAllowedError, match="not allowed"):
+        check_namespace("kube-public")
