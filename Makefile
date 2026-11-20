@@ -88,7 +88,7 @@ budget: ## Claude spend so far
 KB_IMAGE := pgvector/pgvector:0.8.0-pg17
 KB_CONTAINER := sre-kb
 
-.PHONY: kb-up kb-down kb-lint kb-ingest
+.PHONY: kb-up kb-down kb-lint kb-ingest kb-eval
 
 kb-up: ## Start Postgres + pgvector for the knowledge base on 127.0.0.1:5433
 	@docker ps -a --format '{{.Names}}' | grep -qx $(KB_CONTAINER) \
@@ -107,3 +107,6 @@ kb-lint: ## Lint runbooks and postmortems (layer 0, D45; 0 tokens)
 
 kb-ingest: kb-up ## Lint, chunk, embed and index the knowledge base (incremental; 0 tokens)
 	uv run sre-ingest
+
+kb-eval: kb-ingest ## Retrieval eval: recall@5 and MRR per chunking, search mode and cap (0 tokens)
+	uv run sre-eval-retrieval

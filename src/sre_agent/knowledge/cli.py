@@ -1,4 +1,4 @@
-"""CLIs: `sre-ingest` (lint, chunk, embed, sync) and `sre-kb-search` (query the index)."""
+"""CLIs: `sre-ingest` (lint, chunk, embed, sync), `sre-kb-search` (query the index) and `sre-eval-retrieval` (recall@k, MRR)."""
 
 from __future__ import annotations
 
@@ -54,12 +54,79 @@ def search_main() -> None:
     p.add_argument("--mode", choices=["hybrid", "vector", "keyword"], default="hybrid")
     p.add_argument("--variant", choices=sorted(STRATEGIES), default="section")
     p.add_argument("-k", type=int, default=5)
+    p.add_argument("--max-per-doc", type=int, default=None)
     args = p.parse_args()
 
     from sre_agent.knowledge.store import connect, search
 
     with connect() as conn:
         for h in search(
-            conn, args.query, variant=args.variant, mode=args.mode, k=args.k
+            conn,
+            args.query,
+            variant=args.variant,
+            mode=args.mode,
+            k=args.k,
+            max_per_doc=args.max_per_doc,
         ):
             print(f"{h.score:.4f}  {h.doc_id:7} {h.heading[:30]:30}  {h.title}")
+
+
+def eval_main() -> None:
+    p = argparse.ArgumentParser(
+        description="Retrieval eval: recall@k and MRR per chunking variant, search mode "
+        "and per-document cap (0 tokens)."
+    )
+    p.add_argument("-k", type=int, default=5)
+    p.add_argument("--json", action="store_true", help="one JSON line per combination")
+    args = p.parse_args()
+
+    from functools import lru_cache, partial
+
+    from sre_agent.knowledge.embed import embed_query
+    from sre_agent.knowledge.retrieval_eval import evaluate, load_queries
+    from sre_agent.knowledge.store import connect, search
+
+    queries = load_queries(KB_DIR / "queries.yaml")
+    cached_embed = lru_cache(maxsize=None)(embed_query)
+    results = []
+    with connect() as conn:
+        for variant in sorted(STRATEGIES):
+            for mode in ("vector", "keyword", "hybrid"):
+                for cap in (None, 2, 1):
+                    results.append(
+                        evaluate(
+                            queries,
+                            partial(
+                                search,
+                                conn,
+                                variant=variant,
+                                mode=mode,
+                                k=args.k,
+                                max_per_doc=cap,
+                                embed_query=cached_embed,
+                            ),
+                            variant=variant,
+                            mode=mode,
+                            max_per_doc=cap,
+                        )
+                    )
+    results.sort(key=lambda r: (r.recall, r.mrr), reverse=True)
+    if args.json:
+        for r in results:
+            print(json.dumps(r.__dict__))
+        return
+    styles = sorted(results[0].by_style)
+    print(f"{len(queries)} queries, top-{args.k} chunks\n")
+    print(
+        f"{'variant':14} {'mode':8} {'cap':>3}  {'recall':>6} {'MRR':>5} {'docs':>4}  "
+        + " ".join(f"{s[:6]:>6}" for s in styles)
+        + "  misses"
+    )
+    for r in results:
+        cap = "-" if r.max_per_doc is None else str(r.max_per_doc)
+        print(
+            f"{r.variant:14} {r.mode:8} {cap:>3}  {r.recall:6.2f} {r.mrr:5.2f} "
+            f"{r.distinct_docs:4.1f}  "
+            + " ".join(f"{r.by_style[s]:6.2f}" for s in styles)
+            + f"  {','.join(r.misses)}"
+        )

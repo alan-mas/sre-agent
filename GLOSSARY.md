@@ -122,6 +122,9 @@ The shared vocabulary of this project. Code, prompts, docs, evals and commits us
 **MRR** (mean reciprocal rank)
 : The average of 1/rank of the first relevant result per query (1.0 = always first). Rewards putting the right document at the top, not just somewhere in the top *k*.
 
+**Per-document cap**
+: A limit on how many chunks of one document may appear in the top *k* (`max_per_doc`), so one long document cannot fill every slot and the model sees more distinct sources.
+
 ## Repositories
 
 **Agent** (`src/`)

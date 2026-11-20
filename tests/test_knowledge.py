@@ -112,3 +112,34 @@ def test_keyword_search_finds_exact_terms(kb_conn):
         keyword_search(kb_conn, "test", "TestAlert rollout undo")[0].doc_id == "RB-900"
     )
     assert keyword_search(kb_conn, "test", "zzzz-no-match") == []
+
+
+# --- retrieval eval (pure functions; no database, no LLM) ---
+
+
+def test_cap_per_doc_keeps_rank_order():
+    from sre_agent.knowledge.store import cap_per_doc
+
+    hits = [_hit("A#0"), _hit("A#1"), _hit("B#0"), _hit("A#2")]
+    assert [h.chunk_id for h in cap_per_doc(hits, 1)] == ["A#0", "B#0"]
+    assert [h.chunk_id for h in cap_per_doc(hits, 2)] == ["A#0", "A#1", "B#0"]
+    assert len(cap_per_doc(hits, None)) == 4
+
+
+def test_rank_and_scores():
+    from sre_agent.knowledge.retrieval_eval import first_relevant_rank, score
+
+    hits = [_hit("A#0"), _hit("B#0"), _hit("C#0")]
+    assert first_relevant_rank(hits, ["B", "C"]) == 2
+    assert first_relevant_rank(hits, ["Z"]) is None
+    assert score([1, 2, None, 4]) == {"recall": 0.75, "mrr": (1 + 0.5 + 0.25) / 4}
+
+
+def test_query_set_points_to_existing_documents():
+    from sre_agent.knowledge.retrieval_eval import load_queries
+
+    ids = {d.id for d in load_dir(KB_DIR)}
+    queries = load_queries(KB_DIR / "queries.yaml")
+    assert len({q.id for q in queries}) == len(queries)
+    for q in queries:
+        assert q.relevant and set(q.relevant) <= ids, q.id

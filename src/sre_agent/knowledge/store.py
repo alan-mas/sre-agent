@@ -160,17 +160,35 @@ def search(
     variant: str = "section",
     mode: str = "hybrid",
     k: int = 5,
+    max_per_doc: int | None = None,
     embed_query: Callable[[str], list[float]] | None = None,
 ) -> list[Hit]:
-    """Top-k chunks for a query. mode: vector | keyword | hybrid."""
+    """Top-k chunks for a query. mode: vector | keyword | hybrid.
+
+    `max_per_doc` keeps at most that many chunks of one document, so a single long
+    document cannot fill the top-k (None = no cap)."""
     if mode == "keyword":
-        return keyword_search(conn, variant, query)[:k]
-    if embed_query is None:
-        from sre_agent.knowledge.embed import embed_query
-    vec = vector_search(conn, variant, embed_query(query))
-    if mode == "vector":
-        return vec[:k]
-    return rrf([vec, keyword_search(conn, variant, query)])[:k]
+        ranked = keyword_search(conn, variant, query)
+    else:
+        if embed_query is None:
+            from sre_agent.knowledge.embed import embed_query
+        ranked = vector_search(conn, variant, embed_query(query))
+        if mode == "hybrid":
+            ranked = rrf([ranked, keyword_search(conn, variant, query)])
+    return cap_per_doc(ranked, max_per_doc)[:k]
+
+
+def cap_per_doc(hits: Sequence[Hit], n: int | None) -> list[Hit]:
+    """Drop chunks beyond the first `n` of each document, keeping rank order."""
+    if n is None:
+        return list(hits)
+    counts: dict[str, int] = {}
+    out = []
+    for h in hits:
+        counts[h.doc_id] = counts.get(h.doc_id, 0) + 1
+        if counts[h.doc_id] <= n:
+            out.append(h)
+    return out
 
 
 def top_docs(hits: Sequence[Hit], k: int = 5) -> list[str]:

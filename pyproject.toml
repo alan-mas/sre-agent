@@ -30,6 +30,7 @@ sre-postmortem = "sre_agent.postmortem:main"
 sre-doc-lint = "sre_agent.knowledge.lint:main"
 sre-ingest = "sre_agent.knowledge.cli:ingest_main"
 sre-kb-search = "sre_agent.knowledge.cli:search_main"
+sre-eval-retrieval = "sre_agent.knowledge.cli:eval_main"
 
 [build-system]
 requires = ["uv_build>=0.12.19,<0.13.0"]
