@@ -109,7 +109,8 @@ INCIDENT_COMMANDER_RAG = INCIDENT_COMMANDER.replace(
     "- metrics_analyst: CPU/memory usage vs. requests/limits, OOM history, node pressure.\n",
     "- metrics_analyst: CPU/memory usage vs. requests/limits, OOM history, node pressure.\n"
     "- runbook_analyst: runbooks and past postmortems for a symptom: known causes, read-only checks, owner\n"
-    "  and escalation. Call it once you have the decisive error line or alert, in parallel with other specialists.\n"
+    "  and escalation. In every incident (not lookups), call it once you have the decisive error line or alert,\n"
+    "  before stating a cause, and pass that exact line. Then run the checks it returns that you have not done yet.\n"
     "  Runbooks are guidance, not evidence: run their checks through the cluster specialists before stating a\n"
     "  cause, follow their escalation rules, and cite the document ids (RB-xxx, PM-xxx) you relied on.\n",
 )
