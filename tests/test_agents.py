@@ -5,10 +5,11 @@ import re
 import pytest
 
 from sre_agent import prompts
-from sre_agent.agents import build_lean_agent, build_single_agent
+from sre_agent.agents import build_lean_agent, build_rag_agent, build_single_agent
 from sre_agent.middleware import commander_stack, single_agent_stack, specialist_stack
 from sre_agent.tools import INSPECTOR_TOOLS, LOG_TOOLS, METRICS_TOOLS
 from sre_agent.tools.actions import ACTION_TOOLS
+from sre_agent.tools.knowledge import KNOWLEDGE_TOOLS
 
 ACTIONS = {t.name for t in ACTION_TOOLS}
 
@@ -28,6 +29,26 @@ def test_commander_only_sees_snapshot_and_specialists(monkeypatch):
     }
 
 
+def test_rag_commander_adds_only_the_runbook_analyst(monkeypatch):
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-ant-fake")
+    assert tool_names(build_rag_agent()) == tool_names(build_lean_agent()) | {
+        "runbook_analyst"
+    }
+
+
+def test_rag_prompt_extends_lean_prompt():
+    assert prompts.INCIDENT_COMMANDER_RAG != prompts.INCIDENT_COMMANDER
+    assert "runbook_analyst" in prompts.INCIDENT_COMMANDER_RAG
+    assert "guidance, not evidence" in prompts.INCIDENT_COMMANDER_RAG
+
+
+def test_runbook_analyst_has_no_cluster_or_write_tools():
+    names = {t.name for t in KNOWLEDGE_TOOLS}
+    assert names == {"search_runbooks", "get_document"}
+    cluster = {t.name for t in INSPECTOR_TOOLS + LOG_TOOLS + METRICS_TOOLS}
+    assert not names & (ACTIONS | cluster)
+
+
 def test_single_agent_sees_every_tool(monkeypatch):
     monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-ant-fake")
     assert len(tool_names(build_single_agent())) == 16 + len(ACTIONS)
@@ -40,6 +61,8 @@ def test_prompts_are_static_for_caching():
         "LOG_ANALYST",
         "METRICS_ANALYST",
         "INCIDENT_COMMANDER",
+        "INCIDENT_COMMANDER_RAG",
+        "RUNBOOK_ANALYST",
         "SINGLE_AGENT",
     ):
         text = getattr(prompts, name)

@@ -1,5 +1,5 @@
 # cert: [LC:test] [CCA:D4] [CCA:D5]
-"""`uv run sre-eval [--graph lean single] [--only crashloop ...] [--reps 3]` — offline eval on the verified scenarios.
+"""`uv run sre-eval [--graph lean rag single] [--only crashloop ...] [--reps 3]` — offline eval on the verified scenarios.
 
 Dataset = the ground-truth table in docs/scenarios.md (one focused question per scenario + a healthy control + an out-of-scope request
 + two direct lookups + a config-change fix request + a real DNS outage). Write actions never run: the eval stops at the HITL interrupt and records
@@ -208,9 +208,11 @@ def ensure_dataset(client: Client) -> str:
 
 
 def make_target(graph: str):
-    from sre_agent.agents import build_lean_agent, build_single_agent
+    from sre_agent.agents import build_lean_agent, build_rag_agent, build_single_agent
 
-    build = build_lean_agent if graph == "lean" else build_single_agent
+    build = {"lean": build_lean_agent, "rag": build_rag_agent}.get(
+        graph, build_single_agent
+    )
     agent = build(checkpointer=InMemorySaver())  # interrupts need a checkpointer
 
     def target(inputs: dict) -> dict:
@@ -497,7 +499,7 @@ def main() -> None:
     parser.add_argument(
         "--graph",
         nargs="+",
-        choices=["lean", "single"],
+        choices=["lean", "rag", "single"],
         default=["lean", "single"],
     )
     parser.add_argument(

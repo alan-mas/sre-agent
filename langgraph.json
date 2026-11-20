@@ -2,6 +2,7 @@
   "dependencies": ["."],
   "graphs": {
     "sre_lean": "./src/sre_agent/graph.py:sre_lean",
+    "sre_rag": "./src/sre_agent/graph.py:sre_rag",
     "sre_single": "./src/sre_agent/graph.py:sre_single"
   },
   "env": ".env",

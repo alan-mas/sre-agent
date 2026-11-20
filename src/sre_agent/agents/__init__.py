@@ -1,5 +1,6 @@
 # cert: [CCA:D1] [CCA:D4] [LC:build]
-"""Agents: Incident Commander + 3 specialists (lean, subagents-as-tools) and a single-agent baseline."""
+"""Agents: Incident Commander + 3 specialists (lean, subagents-as-tools), the same plus a Runbook Analyst (rag),
+and a single-agent baseline."""
 
 from __future__ import annotations
 
@@ -20,6 +21,7 @@ from sre_agent.tools import (
     cluster_health_snapshot,
 )
 from sre_agent.tools.actions import ACTION_TOOLS
+from sre_agent.tools.knowledge import KNOWLEDGE_TOOLS
 
 
 class Finding(BaseModel):
@@ -34,6 +36,27 @@ class Finding(BaseModel):
     )
 
 
+class DocMatch(BaseModel):
+    id: str = Field(description="Document id, e.g. RB-008 or PM-007")
+    title: str
+    why: str = Field(description="Why it fits the symptom, in one line")
+
+
+class RunbookReport(BaseModel):
+    """Compact report the Runbook Analyst returns to the Incident Commander."""
+
+    summary: str = Field(description="One or two sentences: what the documents say")
+    matches: list[DocMatch] = Field(default_factory=list)
+    checks: list[str] = Field(
+        default_factory=list,
+        description="Read-only checks from the documents that confirm or rule out the cause",
+    )
+    escalation: str | None = Field(
+        default=None, description="Owner or escalation rule the documents give"
+    )
+    no_match: bool = Field(default=False, description="True if no document fits")
+
+
 class SpecialistReport(BaseModel):
     """Compact report a specialist returns to the Incident Commander."""
 
@@ -45,13 +68,17 @@ class SpecialistReport(BaseModel):
 
 
 def _specialist(
-    name: str, system_prompt: str, tools: list, redact_secrets: bool = False
+    name: str,
+    system_prompt: str,
+    tools: list,
+    redact_secrets: bool = False,
+    report: type[BaseModel] = SpecialistReport,
 ) -> object:
     return create_agent(
         model=make_model("subagent"),
         tools=tools,
         system_prompt=system_prompt,
-        response_format=ProviderStrategy(SpecialistReport),
+        response_format=ProviderStrategy(report),
         middleware=specialist_stack(redact_secrets),
         name=name,
     )
@@ -75,6 +102,15 @@ def _traced(agent, graph: str):
 
 
 def build_lean_agent(checkpointer=None):
+    return _build_commander("lean", checkpointer)
+
+
+def build_rag_agent(checkpointer=None):
+    """Lean graph plus the Runbook Analyst (D41)."""
+    return _build_commander("rag", checkpointer)
+
+
+def _build_commander(graph: str, checkpointer=None):
     inspector = _specialist("k8s_inspector", prompts.INSPECTOR, INSPECTOR_TOOLS)
     log_analyst = _specialist(
         "log_analyst", prompts.LOG_ANALYST, LOG_TOOLS, redact_secrets=True
@@ -110,21 +146,37 @@ def build_lean_agent(checkpointer=None):
         """
         return _run_specialist(metrics_analyst, task)
 
+    delegates = [call_inspector, call_log_analyst, call_metrics_analyst]
+    system_prompt = prompts.INCIDENT_COMMANDER
+    if graph == "rag":
+        runbook_analyst = _specialist(
+            "runbook_analyst",
+            prompts.RUNBOOK_ANALYST,
+            KNOWLEDGE_TOOLS,
+            report=RunbookReport,
+        )
+
+        @tool("runbook_analyst", parse_docstring=True)
+        def call_runbook_analyst(task: str) -> str:
+            """Delegate to the Runbook Analyst: runbooks and past postmortems for a symptom (known causes, checks, escalation).
+
+            Args:
+                task: The decisive symptom: exact error line or alert, affected workload and namespace.
+            """
+            return _run_specialist(runbook_analyst, task)
+
+        delegates.append(call_runbook_analyst)
+        system_prompt = prompts.INCIDENT_COMMANDER_RAG
+
     agent = create_agent(
         model=make_model("ic"),
-        tools=[
-            cluster_health_snapshot,
-            call_inspector,
-            call_log_analyst,
-            call_metrics_analyst,
-            *ACTION_TOOLS,
-        ],
-        system_prompt=prompts.INCIDENT_COMMANDER,
+        tools=[cluster_health_snapshot, *delegates, *ACTION_TOOLS],
+        system_prompt=system_prompt,
         middleware=commander_stack(),
         checkpointer=checkpointer,
         name="incident_commander",
     )
-    return _traced(agent, "lean")
+    return _traced(agent, graph)
 
 
 def build_single_agent(checkpointer=None):
