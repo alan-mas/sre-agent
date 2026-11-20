@@ -158,3 +158,82 @@ queries:
     style: question
     query: "Past incidents where we had no alert or the alert was ignored"
     relevant: [PM-002, PM-005, PM-008, PM-006]
+  - id: q33
+    style: paraphrase
+    query: "pods cannot find the database"
+    relevant: [RB-008, PM-007]
+    hard: true
+
+  # --- symptom-first queries (round 2). Written before the documents they target, so they
+  # do not borrow those documents' wording. q34-q38: an SRE's own words (titles naming the
+  # cause removed). All are hard: an older document shares the symptom.
+  - id: q34
+    style: question
+    query: "Our application pods are healthy, but requests to a Kubernetes Service are returning intermittent connection failures. The Service exists and DNS resolution works. How can we investigate whether traffic is reaching the correct pods?"
+    relevant: [RB-011, PM-010]
+    hard: true
+  - id: q35
+    style: question
+    query: "After deploying a new NetworkPolicy, two microservices can no longer communicate with each other. Both pods are Running and Ready, but TCP connections are timing out. What should we investigate?"
+    relevant: [RB-012, PM-009]
+    hard: true
+  - id: q36
+    style: question
+    query: "We updated a ConfigMap containing application configuration, but the running pods continue using the old values. How can we determine why the changes aren't being reflected?"
+    relevant: [PM-013]
+  - id: q37
+    style: question
+    query: "Applications exposed through our Kubernetes Ingress are experiencing increased response times and intermittent 504 errors. Backend pods appear healthy, and internal service communication works normally. Where should we investigate?"
+    relevant: [RB-013, PM-011]
+    hard: true
+  - id: q38
+    style: question
+    query: "During a production deployment, several old pods remain stuck in the Terminating state for several minutes. The new replicas are already running, but the old workloads aren't shutting down properly. What should we investigate?"
+    relevant: [PM-014]
+  - id: q39
+    style: paraphrase
+    query: "calls between two services hang until the client gives up, and the server never logs the request"
+    relevant: [RB-012, PM-009]
+    hard: true
+  - id: q40
+    style: paraphrase
+    query: "about one in three requests to the API fails while the rest succeed"
+    relevant: [RB-011, PM-010]
+    hard: true
+  - id: q41
+    style: paraphrase
+    query: "customers see a gateway timeout page during the sale although every pod is up"
+    relevant: [RB-013, PM-011]
+    hard: true
+  - id: q42
+    style: paraphrase
+    query: "the worker restarts every minute since the credentials were rotated"
+    relevant: [PM-012]
+    hard: true
+  - id: q43
+    style: paraphrase
+    query: "looking up internal names sometimes takes exactly five seconds"
+    relevant: [PM-015, RB-008]
+    hard: true
+  - id: q44
+    style: paraphrase
+    query: "we changed a setting but the app still behaves the old way"
+    relevant: [PM-013]
+  - id: q45
+    style: paraphrase
+    query: "the deploy finished but the previous instances keep hanging around for minutes"
+    relevant: [PM-014]
+  - id: q46
+    style: paraphrase
+    query: "the database is up but the app says it was refused access"
+    relevant: [PM-012]
+    hard: true
+
+# Questions the knowledge base cannot answer (no runbook or postmortem covers them). Not used
+# for recall@k; kept for the agent eval, where the right answer is "no runbook for this".
+unanswerable:
+  - "Our application is experiencing a significant traffic spike, but the Horizontal Pod Autoscaler isn't increasing the replica count despite CPU utilization exceeding its configured target. What could be preventing scaling?"
+  - "We're trying to drain a Kubernetes node during scheduled maintenance, but the operation is blocked by a PodDisruptionBudget. How can we safely proceed without affecting application availability?"
+  - "Multiple deployment and operational commands are taking unusually long to execute. We're also seeing intermittent timeouts when communicating with the Kubernetes API server. How should we investigate?"
+  - "Several pods across different namespaces are experiencing delayed container startup. Kubernetes reports container runtime errors, but the underlying nodes remain Ready. What could be causing this?"
+  - "A development team can no longer deploy new workloads into its namespace. Kubernetes reports exceeded quota, even though the cluster still has available CPU and memory capacity. What's happening?"

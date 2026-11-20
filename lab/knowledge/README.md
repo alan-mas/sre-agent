@@ -6,7 +6,7 @@ Runbooks and postmortems for the Runbook Analyst (D41). **Everything here is syn
 |---|---|
 | `runbooks/` | One runbook per failure mode in the lab, plus **distractors**: problems that share vocabulary with the real ones (DNS errors also say "connection refused", a NotReady node also leaves pods Pending). |
 | `postmortems/` | Blameless postmortems in the Google SRE format (impact, detection, timeline, root cause, action items). |
-| `queries.yaml` | The **retrieval query set**: labeled queries with the documents each one should retrieve. Ground truth for `recall@k` and `MRR`. |
+| `queries.yaml` | The **retrieval query set**: labeled queries with the documents each one should retrieve. Ground truth for `recall@k` and `MRR`. Its `unanswerable` list holds questions no document covers, for the agent eval. |
 
 Every document starts with YAML front matter. The indexer stores it as chunk metadata:
 

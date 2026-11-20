@@ -116,6 +116,9 @@ The shared vocabulary of this project. Code, prompts, docs, evals and commits us
 **Retrieval query set**
 : Labeled queries (alert-style and SRE-question-style) with the documents that should be retrieved for each. The ground truth for retrieval evals, separate from the agent's eval dataset.
 
+**Unanswerable query**
+: A query the knowledge base has no document for. Kept out of recall@k; used in the agent eval, where the right answer is "no runbook covers this", not an invented procedure.
+
 **Recall@k**
 : The share of queries for which a relevant document appears in the top *k* results.
 
