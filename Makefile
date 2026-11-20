@@ -1,5 +1,7 @@
 # SRE K8s agent PoC — local lab commands. `make help` lists targets.
 PROFILE ?= sre-poc
+# Agent kubeconfigs are minted from this kube context (the kind lab since D33).
+AGENT_CTX ?= kind-sre-lab
 KCFG_RO := infra/rbac/generated/kubeconfig-agent-readonly
 KCFG_OP := infra/rbac/generated/kubeconfig-agent-operator
 SCENARIOS := crashloop oomkilled imagepullbackoff pending cpu-hog
@@ -22,15 +24,15 @@ cluster-delete: ## Delete minikube profile
 	PROFILE=$(PROFILE) infra/minikube/down.sh --delete
 
 demo: ## Deploy the healthy baseline app (podinfo)
-	kubectl apply -f lab/demo/podinfo.yaml
-	kubectl rollout status deploy/podinfo -n demo --timeout=180s
+	$(LAB_K) apply -f lab/demo/podinfo.yaml
+	$(LAB_K) rollout status deploy/podinfo -n demo --timeout=180s
 
 rbac: ## Apply read-only (cluster-wide) and operator (demo only) identities
-	kubectl apply -f infra/rbac/readonly.yaml -f infra/rbac/operator.yaml
+	$(LAB_K) apply -f infra/rbac/readonly.yaml -f infra/rbac/operator.yaml
 
 kubeconfig: ## (Re)generate agent kubeconfigs: read-only 24h, operator 8h
-	PROFILE=$(PROFILE) infra/rbac/make-kubeconfig.sh readonly 24h
-	PROFILE=$(PROFILE) infra/rbac/make-kubeconfig.sh operator 8h
+	PROFILE=$(AGENT_CTX) infra/rbac/make-kubeconfig.sh readonly 24h
+	PROFILE=$(AGENT_CTX) infra/rbac/make-kubeconfig.sh operator 8h
 
 rbac-check: ## Prove what each agent identity can and cannot do
 	@echo "read-only:"
@@ -44,18 +46,18 @@ rbac-check: ## Prove what each agent identity can and cannot do
 scenarios: $(addprefix scenario-,$(SCENARIOS)) scenario-bad-rollout ## Inject every failure scenario
 
 $(addprefix scenario-,$(SCENARIOS)): scenario-%:
-	kubectl apply -f lab/scenarios/$*.yaml
+	$(LAB_K) apply -f lab/scenarios/$*.yaml
 
 scenario-bad-rollout: ## Deploy orders-api v1, wait, then roll out broken v2
-	kubectl apply -f lab/scenarios/bad-rollout-v1.yaml
-	kubectl rollout status deploy/orders-api -n demo --timeout=180s
-	kubectl apply -f lab/scenarios/bad-rollout-v2.yaml
+	$(LAB_K) apply -f lab/scenarios/bad-rollout-v1.yaml
+	$(LAB_K) rollout status deploy/orders-api -n demo --timeout=180s
+	$(LAB_K) apply -f lab/scenarios/bad-rollout-v2.yaml
 
 scenarios-clean: ## Remove all failure scenarios (keeps podinfo)
-	kubectl delete deploy -n demo -l 'scenario,scenario!=healthy' --ignore-not-found
+	$(LAB_K) delete deploy -n demo -l 'scenario,scenario!=healthy' --ignore-not-found
 
 status: ## Pods in demo
-	kubectl get pods -n demo -o wide
+	$(LAB_K) get pods -n demo -o wide
 
 test: ## All tests: unit + cluster integration (no tokens)
 	uv run pytest -q

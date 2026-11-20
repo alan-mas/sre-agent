@@ -12,7 +12,14 @@ OUT="${OUT_DIR}/kubeconfig-agent-${ROLE}"
 mkdir -p "$OUT_DIR"
 
 SERVER="$(kubectl config view --minify --context "$PROFILE" -o jsonpath='{.clusters[0].cluster.server}')"
+# minikube references the CA by file; kind embeds it (certificate-authority-data).
 CA_FILE="$(kubectl config view --minify --context "$PROFILE" -o jsonpath='{.clusters[0].cluster.certificate-authority}')"
+if [[ -z "$CA_FILE" ]]; then
+  CA_FILE="$(mktemp)"
+  trap 'rm -f "$CA_FILE"' EXIT
+  kubectl config view --raw --minify --context "$PROFILE" \
+    -o jsonpath='{.clusters[0].cluster.certificate-authority-data}' | base64 -d > "$CA_FILE"
+fi
 TOKEN="$(kubectl --context "$PROFILE" create token "$SA" -n "$NS" --duration="$DURATION")"
 
 rm -f "$OUT"
