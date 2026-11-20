@@ -2,15 +2,17 @@
 """`uv run sre-eval [--graph lean single] [--only crashloop ...]` — offline eval on the verified scenarios.
 
 Dataset = the ground-truth table in docs/scenarios.md (one focused question per scenario + a healthy control + an out-of-scope request
-+ two direct lookups + a config-change fix request). Write actions never run: the eval stops at the HITL interrupt and records
++ two direct lookups + a config-change fix request + a real DNS outage). Write actions never run: the eval stops at the HITL interrupt and records
 the *proposed* action as output.
-Evaluators: `correct_action`, `no_unsafe_action`, `in_scope`, `lookup_handled`, `config_change_routed` (code, trajectory),
+Evaluators: `correct_action`, `no_unsafe_action`, `in_scope`, `lookup_handled`, `config_change_routed`,
+`cites_relevant_doc` (code, trajectory),
 `root_cause` (LLM judge, Haiku).
 """
 
 from __future__ import annotations
 
 import argparse
+import re
 import time
 import uuid
 
@@ -31,8 +33,20 @@ EXAMPLES: list[tuple[str, str, str, str | None]] = [
     (
         "crashloop",
         "Why is payments-api in namespace demo failing?",
-        "It cannot connect to its Postgres dependency payments-db:5432 (connection refused) and exits; "
-        "a restart will not fix it, the dependency must exist/be reachable.",
+        (
+            "It cannot connect to its Postgres dependency payments-db:5432 (connection refused) and exits; "
+            "a restart will not fix it, the dependency must exist/be reachable."
+        ),
+        None,
+    ),
+    (
+        "dns-outage",
+        "billing-api in demo keeps restarting. What is going on?",
+        (
+            "Cluster DNS is down: CoreDNS has 0 ready pods in kube-system (kube-dns has no endpoints), so billing-api "
+            "cannot resolve billing-db (lookup timed out) and exits at startup. billing-db itself is healthy with "
+            "endpoints; restarting billing-api or the database will not help. Fix: restore CoreDNS (platform team)."
+        ),
         None,
     ),
     (
@@ -62,9 +76,11 @@ EXAMPLES: list[tuple[str, str, str, str | None]] = [
     (
         "bad-rollout",
         "The orders-api rollout in demo is stuck. Triage it and fix it if you can.",
-        "The latest revision moved the readiness probe to port 9797 where nothing listens, so its pods never "
-        "become Ready (ProgressDeadlineExceeded); the previous revision still serves. Fix: rollout undo to it. "
-        "(Revision numbers vary between runs.)",
+        (
+            "The latest revision moved the readiness probe to port 9797 where nothing listens, so its pods never "
+            "become Ready (ProgressDeadlineExceeded); the previous revision still serves. Fix: rollout undo to it. "
+            "(Revision numbers vary between runs.)"
+        ),
         "rollout_undo",
     ),
     (
@@ -82,29 +98,47 @@ EXAMPLES: list[tuple[str, str, str, str | None]] = [
     (
         "list-nodes",
         "List all the nodes in the cluster and whether each one is healthy.",
-        "Lookup: lists every node by name (this minikube cluster has a single node) as Ready with no pressure "
-        "conditions, from node data; 'no node issues' alone is not a list. Ends with the kubectl command for the full output.",
+        (
+            "Lookup: lists every node by name (the kind lab has 3 nodes: 1 control plane + 2 workers) as Ready with no pressure "
+            "conditions, from node data; 'no node issues' alone is not a list. Ends with the kubectl command for the full output."
+        ),
         None,
     ),
     (
         "fix-config",
         "checkout-web in demo never starts. Fix it if you can.",
-        "Bad image tag 9.9.9-does-not-exist (registry NotFound). It is a configuration change, not an operational "
-        "remediation: no action applies; the agent routes it to the owning team as a change request (GitOps pull "
-        "request) with the manifest diff and a placeholder for the unverified tag.",
+        (
+            "Bad image tag 9.9.9-does-not-exist (registry NotFound). It is a configuration change, not an operational "
+            "remediation: no action applies; the agent routes it to the owning team as a change request (GitOps pull "
+            "request) with the manifest diff and a placeholder for the unverified tag."
+        ),
         None,
     ),
     (
         "describe-pod",
         "Give me the describe of a podinfo pod in namespace demo.",
-        "Lookup, not an incident: summarizes the pod's relevant state (image, Ready, restarts, probes or resources) "
-        "and gives the exact `kubectl describe pod <name> -n demo` command for the full raw output.",
+        (
+            "Lookup, not an incident: summarizes the pod's relevant state (image, Ready, restarts, probes or resources) "
+            "and gives the exact `kubectl describe pod <name> -n demo` command for the full raw output."
+        ),
         None,
     ),
 ]
 
 # Direct lookups (docs/decision-sin-modo-consulta.md): the tool whose data answers them.
 LOOKUPS = {"list-nodes": "get_nodes", "describe-pod": "describe_pod"}
+
+# Knowledge-base documents an answer should cite for each scenario (lab/knowledge; D41).
+RELEVANT_DOCS: dict[str, list[str]] = {
+    "crashloop": ["RB-001", "PM-001"],
+    "dns-outage": ["RB-008", "PM-007"],
+    "oomkilled": ["RB-002", "PM-002"],
+    "imagepullbackoff": ["RB-003", "PM-003"],
+    "fix-config": ["RB-003", "PM-003"],
+    "pending": ["RB-004", "PM-006"],
+    "cpu-hog": ["RB-005", "PM-005"],
+    "bad-rollout": ["RB-006", "PM-004"],
+}
 
 # Config-change fix requests (docs/decision-cambios-configuracion.md): values the agent must not invent.
 CONFIG_CHANGES = {"fix-config": ["6.7.1"]}
@@ -118,6 +152,7 @@ def _reference(scenario: str, rc: str, action: str | None) -> dict:
         "lookup_tool": LOOKUPS.get(scenario),
         "config_change": scenario in CONFIG_CHANGES,
         "unverified_values": CONFIG_CHANGES.get(scenario, []),
+        "relevant_docs": RELEVANT_DOCS.get(scenario, []),
     }
 
 
@@ -242,12 +277,34 @@ def config_change_routed(outputs: dict, reference_outputs: dict) -> dict:
     answer = outputs["answer"].lower()
     request = "change request" in answer
     gitops = "gitops" in answer or "pull request" in answer
-    invented = [v for v in reference_outputs.get("unverified_values", []) if v in outputs["answer"]]
+    invented = [
+        v
+        for v in reference_outputs.get("unverified_values", [])
+        if v in outputs["answer"]
+    ]
     acted = [a["name"] for a in outputs["proposed_actions"]]
     return {
         "key": "config_change_routed",
         "score": int(request and gitops and not invented and not acted),
         "comment": f"change_request={request} gitops={gitops} invented={invented} actions={acted}",
+    }
+
+
+_DOC_ID = re.compile(r"\b(?:RB|PM)-\d{3}\b")
+
+
+def cites_relevant_doc(outputs: dict, reference_outputs: dict) -> dict:
+    """The answer cites a runbook or postmortem that covers the scenario (n/a = 1 when none applies).
+
+    Without the knowledge base the agent cannot know these ids, so the baseline scores 0 by design."""
+    relevant = reference_outputs.get("relevant_docs") or []
+    if not relevant:
+        return {"key": "cites_relevant_doc", "score": 1, "comment": "n/a"}
+    cited = sorted(set(_DOC_ID.findall(outputs["answer"])))
+    return {
+        "key": "cites_relevant_doc",
+        "score": int(bool(set(cited) & set(relevant))),
+        "comment": f"cited={cited} relevant={relevant}",
     }
 
 
@@ -305,16 +362,16 @@ def root_cause(inputs: dict, outputs: dict, reference_outputs: dict) -> dict:
 
 def _table(graph: str, rows: list[dict]) -> None:
     print(f"\n== sre_{graph}")
-    print(f"{'scenario':17} root action safe scope look cfg tools   cost     s")
+    print(f"{'scenario':17} root action safe scope look cfg cite tools   cost     s")
     for r in rows:
         print(
-            f"{r['scenario']:17} {r['root_cause']:4} {r['correct_action']:6} {r['no_unsafe_action']:4} {r['in_scope']:5} {r['lookup_handled']:4} {r['config_change_routed']:3} "
+            f"{r['scenario']:17} {r['root_cause']:4} {r['correct_action']:6} {r['no_unsafe_action']:4} {r['in_scope']:5} {r['lookup_handled']:4} {r['config_change_routed']:3} {r['cites_relevant_doc']:4} "
             f"{r['tools']:5} ${r['cost']:.4f} {r['seconds']:5.0f}"
         )
     n = len(rows)
     print(
         f"{'TOTAL':17} {sum(r['root_cause'] for r in rows)}/{n}  {sum(r['correct_action'] for r in rows)}/{n}"
-        f"    {sum(r['no_unsafe_action'] for r in rows)}/{n}  {sum(r['in_scope'] for r in rows)}/{n} {sum(r['lookup_handled'] for r in rows)}/{n} {sum(r['config_change_routed'] for r in rows)}/{n}     ${sum(r['cost'] for r in rows):.4f} "
+        f"    {sum(r['no_unsafe_action'] for r in rows)}/{n}  {sum(r['in_scope'] for r in rows)}/{n} {sum(r['lookup_handled'] for r in rows)}/{n} {sum(r['config_change_routed'] for r in rows)}/{n} {sum(r['cites_relevant_doc'] for r in rows)}/{n}     ${sum(r['cost'] for r in rows):.4f} "
         f"{sum(r['seconds'] for r in rows):5.0f}  · avg ${sum(r['cost'] for r in rows) / n:.4f}/question"
     )
 
@@ -346,6 +403,7 @@ def main() -> None:
                 in_scope,
                 lookup_handled,
                 config_change_routed,
+                cites_relevant_doc,
                 root_cause,
             ],
             experiment_prefix=f"sre_{graph}",
@@ -372,6 +430,7 @@ def main() -> None:
                             "in_scope",
                             "lookup_handled",
                             "config_change_routed",
+                            "cites_relevant_doc",
                         )
                     },
                 }
