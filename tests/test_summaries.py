@@ -182,5 +182,9 @@ def test_waiting_message_reaches_describe_and_image_pull_rows_only():
     assert "code = NotFound" in summarize_pod(pod, NOW)["waiting_message"]
 
     crash = make_pod(ready=False, waiting="CrashLoopBackOff", last="Error", restarts=5)
-    crash.status.container_statuses[0].state.waiting.message = "back-off 5m0s restarting"
-    assert "waiting_message" not in summarize_pod(crash, NOW)  # generic text: snapshot stays compact
+    crash.status.container_statuses[
+        0
+    ].state.waiting.message = "back-off 5m0s restarting"
+    assert "waiting_message" not in summarize_pod(
+        crash, NOW
+    )  # generic text: snapshot stays compact

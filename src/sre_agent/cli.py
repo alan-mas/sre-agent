@@ -61,7 +61,9 @@ def main() -> None:
     thread_id = str(uuid.uuid4())
     config = {
         "configurable": {"thread_id": thread_id},
-        "tags": [f"scenario:{args.tag}"],  # run_name / graph tag come from the graph itself
+        "tags": [
+            f"scenario:{args.tag}"
+        ],  # run_name / graph tag come from the graph itself
         "metadata": {"scenario": args.tag, "thread_id": thread_id},
     }
     started = time.monotonic()
