@@ -1,0 +1,160 @@
+# Retrieval query set: ground truth for recall@k and MRR (synthetic).
+#
+# style:
+#   alert     - text shaped like an alert or the agent's own findings
+#   question  - a direct question from an SRE
+#   paraphrase - the same need in different words, without the document's key terms
+#               (tests semantic search; keyword search alone should struggle)
+#   exact     - an exact code, message or alert name (tests keyword search; vectors alone may struggle)
+# relevant: documents that answer the query, best first. A hit is any of them.
+# hard: true when a distractor shares vocabulary with the right answer.
+
+queries:
+  # --- crashloop ---
+  - id: q01
+    style: alert
+    query: "KubePodCrashLooping payments-api: container exits with connection refused to payments-db:5432"
+    relevant: [RB-001, PM-001]
+    hard: true
+  - id: q02
+    style: question
+    query: "How do I debug a pod that keeps restarting with BackOff?"
+    relevant: [RB-001]
+  - id: q03
+    style: question
+    query: "Has payments-api crash looped before, and what was the cause?"
+    relevant: [PM-001, PM-007]
+  - id: q04
+    style: paraphrase
+    query: "the app dies right after starting because its database is unreachable"
+    relevant: [RB-001, PM-001]
+  - id: q05
+    style: alert
+    query: "several services crash looping at the same time, logs say no such host"
+    relevant: [RB-008, PM-007]
+    hard: true
+
+  # --- oomkilled ---
+  - id: q06
+    style: exact
+    query: "exit code 137"
+    relevant: [RB-002]
+  - id: q07
+    style: alert
+    query: "report-worker lastState OOMKilled, restarts rising, limit 64Mi"
+    relevant: [RB-002, PM-002]
+  - id: q08
+    style: paraphrase
+    query: "worker gets killed for using too much memory when the monthly job runs"
+    relevant: [PM-002, RB-002]
+  - id: q09
+    style: question
+    query: "What is the difference between an OOMKilled container and an evicted pod?"
+    relevant: [RB-009, RB-002]
+    hard: true
+
+  # --- imagepullbackoff ---
+  - id: q10
+    style: alert
+    query: "checkout-web ImagePullBackOff, Failed event: manifest unknown for tag 9.9.9-does-not-exist"
+    relevant: [RB-003, PM-003]
+  - id: q11
+    style: exact
+    query: "ErrImagePull"
+    relevant: [RB-003]
+  - id: q12
+    style: paraphrase
+    query: "new pods can't download their container from the registry"
+    relevant: [RB-003]
+  - id: q13
+    style: question
+    query: "A release deployed a tag that was never pushed. Should I pick a tag that exists?"
+    relevant: [RB-003, PM-003]
+
+  # --- pending ---
+  - id: q14
+    style: alert
+    query: "ml-batch pods Pending, FailedScheduling 0/3 nodes are available: 3 Insufficient cpu"
+    relevant: [RB-004, PM-006]
+  - id: q15
+    style: paraphrase
+    query: "a job asks for more processors than any machine in the cluster has"
+    relevant: [RB-004, PM-006]
+  - id: q16
+    style: question
+    query: "Pods are Pending and one node shows NotReady. Where do I start?"
+    relevant: [RB-007, RB-004]
+    hard: true
+  - id: q17
+    style: exact
+    query: "untolerated taint"
+    relevant: [RB-004]
+
+  # --- cpu-hog ---
+  - id: q18
+    style: alert
+    query: "search-indexer CPU at 501m with a 500m limit and a 50m request"
+    relevant: [RB-005, PM-005]
+  - id: q19
+    style: exact
+    query: "CPUThrottlingHigh"
+    relevant: [RB-005, PM-005]
+  - id: q20
+    style: paraphrase
+    query: "service is slow but never restarts and shows no errors; usage is flat at its maximum"
+    relevant: [RB-005]
+  - id: q21
+    style: question
+    query: "Will restarting a throttled pod fix the latency?"
+    relevant: [RB-005, PM-005]
+
+  # --- bad-rollout ---
+  - id: q22
+    style: alert
+    query: "orders-api ProgressDeadlineExceeded, revision 2 pods 0/1 READY, readiness probe failed connection refused on 9797"
+    relevant: [RB-006, PM-004]
+    hard: true
+  - id: q23
+    style: exact
+    query: "ProgressDeadlineExceeded"
+    relevant: [RB-006]
+  - id: q24
+    style: question
+    query: "When is a rollout undo the right fix instead of editing the deployment?"
+    relevant: [RB-006, PM-004]
+  - id: q25
+    style: paraphrase
+    query: "the new version never becomes healthy and the old one is still taking traffic"
+    relevant: [RB-006, PM-004]
+
+  # --- distractors as the right answer ---
+  - id: q26
+    style: alert
+    query: "KubeNodeNotReady: kubelet stopped posting node status"
+    relevant: [RB-007]
+  - id: q27
+    style: alert
+    query: "pods Evicted: the node was low on resource ephemeral-storage"
+    relevant: [RB-009]
+  - id: q28
+    style: exact
+    query: "x509: certificate has expired or is not yet valid"
+    relevant: [RB-010, PM-008]
+  - id: q29
+    style: paraphrase
+    query: "every browser shows a security warning but all pods are healthy"
+    relevant: [RB-010, PM-008]
+  - id: q30
+    style: question
+    query: "Who owns CoreDNS changes and how should the Corefile be changed?"
+    relevant: [PM-007, RB-008]
+
+  # --- postmortem recall (recurrence) ---
+  - id: q31
+    style: question
+    query: "Which past incidents were caused by a skipped manual step?"
+    relevant: [PM-001]
+  - id: q32
+    style: question
+    query: "Past incidents where we had no alert or the alert was ignored"
+    relevant: [PM-002, PM-005, PM-008, PM-006]
