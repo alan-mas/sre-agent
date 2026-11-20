@@ -1,12 +1,20 @@
 """Code evaluators and dataset shape (no tokens)."""
 
+from langchain_core.messages import AIMessage, HumanMessage, ToolMessage
+
 from sre_agent.evals import (
     CONFIG_CHANGES,
+    CONFIRMATIONS,
     EXAMPLES,
     LOOKUPS,
     RELEVANT_DOCS,
+    ConfirmChecks,
+    CriterionCheck,
     cites_relevant_doc,
+    cluster_evidence,
     config_change_routed,
+    confirm_score,
+    confirmed_root_cause,
     correct_action,
     in_scope,
     lookup_handled,
@@ -118,3 +126,51 @@ def test_relevant_docs_exist_in_the_knowledge_base():
     ids = {d.id for d in load_dir(KB_DIR)}
     for scenario, docs in RELEVANT_DOCS.items():
         assert set(docs) <= ids, scenario
+
+
+def test_confirmation_criteria_target_real_scenarios():
+    scenarios = {e[0] for e in EXAMPLES}
+    assert set(CONFIRMATIONS) <= scenarios
+    assert "Corefile" in CONFIRMATIONS["dns-outage"]  # PM-007's cause is not the lab's
+
+
+def test_confirmed_root_cause_is_na_without_criteria():
+    # Must not call the judge (no tokens in tests).
+    result = confirmed_root_cause({}, {"answer": "x"}, {"confirmation": None})
+    assert result["score"] == 1 and result["comment"] == "n/a"
+
+
+def test_cluster_evidence_keeps_cluster_tools_and_drops_knowledge():
+    messages = [
+        HumanMessage("why?"),
+        AIMessage("", tool_calls=[{"name": "k8s_inspector", "args": {}, "id": "1"}]),
+        ToolMessage("coredns 0/0 ready", name="k8s_inspector", tool_call_id="1"),
+        ToolMessage("RB-008: check CoreDNS", name="runbook_analyst", tool_call_id="2"),
+    ]
+    evidence = cluster_evidence(messages)
+    assert "[k8s_inspector] coredns 0/0 ready" in evidence
+    assert "RB-008" not in evidence
+
+
+def _checks(met, not_checked=False, unsupported=False):
+    return ConfirmChecks(
+        reasoning="r",
+        criteria=[
+            CriterionCheck(criterion=i, stated=True, supported=s) for i, s in met
+        ],
+        not_checked=not_checked,
+        unsupported_claim=unsupported,
+    )
+
+
+def test_confirm_score_needs_every_criterion_stated_and_supported():
+    assert confirm_score(_checks([(1, True), (2, True)]), 2)[0] == 1
+    assert confirm_score(_checks([(1, True), (2, False)]), 2)[0] == 0
+    assert confirm_score(_checks([(1, True)]), 2)[0] == 0  # criterion 2 never assessed
+
+
+def test_confirm_score_fails_on_not_checked_or_unsupported_claim():
+    both = [(1, True), (2, True)]
+    assert confirm_score(_checks(both, not_checked=True), 2)[0] == 0
+    # e.g. asserting PM-007's Corefile error when CoreDNS is only scaled to 0
+    assert confirm_score(_checks(both, unsupported=True), 2)[0] == 0

@@ -93,6 +93,18 @@ The shared vocabulary of this project. Code, prompts, docs, evals and commits us
 **Baseline**
 : The measurement a change is compared against (a previous version, or the single agent).
 
+**LLM judge**
+: A model that grades an agent's output against a reference (e.g. `root_cause`). It is itself a model to evaluate: see decomposed rubric and judge calibration (D48).
+
+**Decomposed rubric**
+: A judge prompt split into independent yes/no checks (one per criterion); code combines them into the score. More consistent than one overall verdict, and a failure says which check failed.
+
+**Judge calibration**
+: Comparing a judge's verdicts with human labels on the same runs, and fixing the criteria until they agree, before the judge is used to compare versions.
+
+**Confirmed root cause**
+: A cause the agent observed with cluster tools (symptom and the failing component), not only inferred. A runbook's or postmortem's cause is a hypothesis until a tool shows it.
+
 **Budget ledger**
 : The monthly spend record (`.budget/ledger-YYYY-MM.json`). Every model call checks it before running; the cap is $15 per month (D36). Check spend with `uv run sre-budget`.
 
