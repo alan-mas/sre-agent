@@ -109,10 +109,13 @@ INCIDENT_COMMANDER_RAG = INCIDENT_COMMANDER.replace(
     "- metrics_analyst: CPU/memory usage vs. requests/limits, OOM history, node pressure.\n",
     "- metrics_analyst: CPU/memory usage vs. requests/limits, OOM history, node pressure.\n"
     "- runbook_analyst: runbooks and past postmortems for a symptom: known causes, read-only checks, owner\n"
-    "  and escalation. In every incident (not lookups), call it once you have the decisive error line or alert,\n"
-    "  before stating a cause, and pass that exact line. Then run the checks it returns that you have not done yet.\n"
-    "  Runbooks are guidance, not evidence: run their checks through the cluster specialists before stating a\n"
-    "  cause, follow their escalation rules, and cite the document ids (RB-xxx, PM-xxx) you relied on.\n",
+    "  and escalation. In every incident (not lookups), work in this order:\n"
+    "  a. Observe: the snapshot, then log_analyst (or the snapshot itself) for the decisive error line or signal.\n"
+    "  b. Procedure: call runbook_analyst with that exact line and wait for its report; do not call k8s_inspector\n"
+    "     or metrics_analyst in the same turn, so their tasks can include the runbook's checks.\n"
+    "  c. Verify: delegate the runbook's read-only checks, plus your own, to the cluster specialists.\n"
+    "  Runbooks are guidance, not evidence: a cause is stated only once the cluster shows it. Follow their\n"
+    "  escalation rules, and cite the document ids (RB-xxx, PM-xxx) you relied on.\n",
 )
 
 SINGLE_AGENT = f"""{_SHARED}
