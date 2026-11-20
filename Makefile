@@ -83,3 +83,27 @@ hooks: ## Install git hooks (commit-msg convention, pre-push squash check) and t
 
 budget: ## Claude spend so far
 	uv run sre-budget
+
+# Knowledge base (D41/D42/D45): local Postgres + pgvector, trust auth bound to 127.0.0.1 only.
+KB_IMAGE := pgvector/pgvector:0.8.0-pg17
+KB_CONTAINER := sre-kb
+
+.PHONY: kb-up kb-down kb-lint kb-ingest
+
+kb-up: ## Start Postgres + pgvector for the knowledge base on 127.0.0.1:5433
+	@docker ps -a --format '{{.Names}}' | grep -qx $(KB_CONTAINER) \
+	  && docker start $(KB_CONTAINER) >/dev/null \
+	  || docker run -d --name $(KB_CONTAINER) -p 127.0.0.1:5433:5432 \
+	     -e POSTGRES_USER=sre -e POSTGRES_DB=kb -e POSTGRES_HOST_AUTH_METHOD=trust \
+	     -v sre-kb-data:/var/lib/postgresql/data $(KB_IMAGE) >/dev/null
+	@until docker exec $(KB_CONTAINER) pg_isready -U sre -d kb >/dev/null 2>&1; do sleep 1; done
+	@echo "knowledge base ready on 127.0.0.1:5433"
+
+kb-down: ## Stop the knowledge base container (keeps the data volume)
+	docker stop $(KB_CONTAINER)
+
+kb-lint: ## Lint runbooks and postmortems (layer 0, D45; 0 tokens)
+	uv run sre-doc-lint
+
+kb-ingest: kb-up ## Lint, chunk, embed and index the knowledge base (incremental; 0 tokens)
+	uv run sre-ingest

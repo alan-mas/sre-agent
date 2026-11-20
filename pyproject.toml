@@ -5,12 +5,15 @@ description = "SRE multi-agent PoC for Kubernetes triage (LangChain + Claude + L
 readme = "README.md"
 requires-python = ">=3.12,<3.13"
 dependencies = [
+    "fastembed>=0.9.1",
     "kubernetes>=37.0.1",
     "langchain>=1.4.6",
     "langchain-anthropic>=1.7.6",
     "langgraph>=1.2.16",
     "langgraph-cli[inmem]>=0.4.36",
     "langsmith>=0.14.11",
+    "pgvector>=0.5.1",
+    "psycopg[binary]>=3.3.9",
     "python-dotenv>=1.2.4",
     "pyyaml>=6.0.3",
     "slack-bolt>=1.30.0",
@@ -25,6 +28,8 @@ sre-eval = "sre_agent.evals:main"
 sre-slack = "sre_agent.slack:main"
 sre-postmortem = "sre_agent.postmortem:main"
 sre-doc-lint = "sre_agent.knowledge.lint:main"
+sre-ingest = "sre_agent.knowledge.cli:ingest_main"
+sre-kb-search = "sre_agent.knowledge.cli:search_main"
 
 [build-system]
 requires = ["uv_build>=0.12.19,<0.13.0"]
@@ -37,4 +42,7 @@ dev = [
 ]
 
 [tool.pytest.ini_options]
-markers = ["cluster: integration tests against the local minikube lab (0 tokens)"]
+markers = [
+    "cluster: integration tests against the local minikube lab (0 tokens)",
+    "kb: integration tests against the local pgvector knowledge base (make kb-up; 0 tokens)",
+]

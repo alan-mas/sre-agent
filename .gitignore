@@ -36,3 +36,4 @@ CLAUDE.local.md
 
 # Claude Code personal settings (hooks, status line)
 .claude/settings.local.json
+.cache/
