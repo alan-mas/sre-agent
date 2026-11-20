@@ -6,6 +6,7 @@
 #   paraphrase - the same need in different words, without the document's key terms
 #               (tests semantic search; keyword search alone should struggle)
 #   exact     - an exact code, message or alert name (tests keyword search; vectors alone may struggle)
+#   log       - a raw error line captured from the lab cluster (`kubectl logs --previous`), unedited
 # relevant: documents that answer the query, best first. A hit is any of them.
 # hard: true when a distractor shares vocabulary with the right answer.
 
@@ -227,6 +228,20 @@ queries:
     style: paraphrase
     query: "the database is up but the app says it was refused access"
     relevant: [PM-012]
+    hard: true
+
+  # --- real log lines (round 3). Captured from the lab after the Runbook Analyst's first smoke
+  # test: the exact DNS error did not retrieve RB-008, a gap the synthetic queries did not show.
+  # Only the runbook counts here: it holds the checks and escalation; the postmortem alone does not.
+  - id: q47
+    style: log
+    query: "ERROR lookup billing-db.demo.svc.cluster.local failed: ;; connection timed out; no servers could be reached"
+    relevant: [RB-008]
+    hard: true
+  - id: q48
+    style: log
+    query: "ERROR failed to connect to postgres at payments-db.demo.svc:5432: connection refused"
+    relevant: [RB-001]
     hard: true
 
 # Questions the knowledge base cannot answer (no runbook or postmortem covers them). Not used
