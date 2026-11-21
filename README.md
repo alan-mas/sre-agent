@@ -27,9 +27,12 @@ flowchart TD
       IC -->|subagent| K[K8s Inspector]
       IC -->|subagent| L[Log Analyst]
       IC -->|subagent| M[Metrics Analyst]
+      IC -->|subagent · sre_rag| R[Runbook Analyst]
       IC -.->|HITL interrupt| W[Write tools]
     end
     K & L & M & S -->|read-only RBAC| C[(Kubernetes)]
+    R -->|kb_reader: SELECT only| KB[(pgvector<br/>runbooks · postmortems)]
+    CC[Claude Code / any MCP client] -->|stdio · sre-kb-mcp| KB
     W -->|namespaced operator RBAC| C
     LG -->|traces · cost · feedback · evals| LS[LangSmith]
 ```
@@ -48,6 +51,7 @@ flowchart TD
 - **Untrusted inputs:** logs, events and alerts are wrapped as data; secrets are redacted; the agent cannot read `Secret` objects.
 - **Scope guard:** off-topic requests are refused in one line; API refusals are isolated so they don't poison the rest of the thread.
 - **Hard budget:** every model goes through one factory with a monthly spend cap.
+- **Knowledge base, read-only twice:** the Runbook Analyst and the MCP server search as a database role that can only `SELECT`; tools are annotated read-only, arguments are validated, and document text is treated as untrusted (D50).
 
 ## Measured results
 Evaluated with a LangSmith dataset of 11 reproducible cases: six injected failures (crashloop, OOMKilled, ImagePullBackOff, Pending, CPU throttling, bad rollout), a healthy control, an out-of-scope request, two direct lookups and a "fix it" request that must become a change request. Scenario ground truth: [`docs/scenarios.md`](docs/scenarios.md).
@@ -91,11 +95,19 @@ uv run sre-budget                 # current monthly spend
 ```
 Agent Chat UI: https://agentchat.vercel.app → `http://localhost:2024`, graph `sre_lean`. A guided demo is in [`docs/demo.md`](docs/demo.md).
 
+Knowledge base, from the agent or from Claude Code:
+```bash
+make kb-ingest                    # local pgvector + index the runbooks (0 tokens); creates the kb_reader role
+claude mcp add --scope local sre-kb -- uv run --directory "$PWD" sre-kb-mcp   # read-only MCP server, stdio
+```
+
 ## Repository layout
 ```
 src/sre_agent/
 ├── agents/        # commander, specialists and single-agent baseline (create_agent)
-├── tools/         # Kubernetes tools: compact JSON, read-only + HITL write tools
+├── tools/         # Kubernetes and knowledge tools: compact JSON, read-only + HITL write tools
+├── knowledge/     # runbook/postmortem lint, chunking, embeddings, pgvector hybrid search, retrieval eval
+├── mcp_kb.py      # read-only MCP server for the knowledge base (stdio)
 ├── prompts/       # system prompts per role
 ├── middleware.py  # caching, summarization, call limits, redaction, refusal guard
 ├── graph.py       # graphs exposed to the Agent Server
@@ -123,7 +135,10 @@ Every non-obvious choice is recorded with its reason and the data behind it in [
 - [ ] Run the agent inside Kubernetes: FastAPI + LangGraph Postgres checkpointer; survives a pod restart mid-approval; agent SLOs
 - [ ] Remediation as Pull Requests to a GitOps repo watched by Argo CD
 - [ ] CI gate: PRs that touch prompts or models run the eval dataset and fail if accuracy drops
-- [ ] Runbook Analyst subagent: RAG over runbooks and postmortems kept in Confluence (D41, D42); pgvector, hybrid search with permissions, recall@5 and faithfulness; similar-incident prefill and recurrence warnings in postmortems
+- [x] Runbook Analyst subagent: hybrid search (pgvector + keyword, RRF) over synthetic runbooks and postmortems, recall@5 / MRR eval, measured agent before/after (D41, D46)
+- [x] Knowledge base as a read-only MCP server over stdio (D50)
+- [ ] Remote MCP over Streamable HTTP with OAuth 2.1 and team-scoped access (row-level security from Confluence permissions) plus a cross-team leak eval (D50, designed)
+- [ ] Confluence as the source of truth (D42); similar-incident prefill and recurrence warnings in postmortems
 - [ ] Later, as the agent matures: turn proven runbooks into **agent skills** (a procedure with its allowed tools and verification checks, loaded on demand by name and description); retrieval keeps covering the long tail
 - [ ] AWS signals (CloudWatch) through a read-only MCP server
 - [ ] Prompt-injection cases in the dataset

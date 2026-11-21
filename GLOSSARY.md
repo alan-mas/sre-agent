@@ -34,7 +34,7 @@ The shared vocabulary of this project. Code, prompts, docs, evals and commits us
 : The orchestrator agent (`incident_commander`, graph `sre_lean`). It delegates investigation to specialists, correlates their findings, proposes remediations and is the only agent with write tools (D1, D19).
 
 **Specialist** (subagent)
-: A read-only agent with a narrow tool set, exposed to the commander as a tool: `inspector`, `log_analyst`, `metrics_analyst`. It sees only its own tool output, which keeps the commander's context small (D1, D3). The **Runbook Analyst** is a *planned* specialist (D41).
+: A read-only agent with a narrow tool set, exposed to the commander as a tool: `inspector`, `log_analyst`, `metrics_analyst`. It sees only its own tool output, which keeps the commander's context small (D1, D3). The **Runbook Analyst** searches the knowledge base (graph `sre_rag`, D41).
 
 **Single agent** (`sre_single`)
 : The baseline: one agent with all tools and no delegation. Multi-agent must beat or justify itself against it with data (D10, D23).
@@ -108,7 +108,7 @@ The shared vocabulary of this project. Code, prompts, docs, evals and commits us
 **Budget ledger**
 : The monthly spend record (`.budget/ledger-YYYY-MM.json`). Every model call checks it before running; the cap is $15 per month (D36). Check spend with `uv run sre-budget`.
 
-## Knowledge retrieval (*planned*, D41/D42)
+## Knowledge retrieval (D41, D46, D50)
 
 **Knowledge base**
 : The runbooks and postmortems the Runbook Analyst searches. In the lab it is synthetic Markdown under `lab/knowledge/`, labeled as such; Confluence is the planned source of truth (D42).
@@ -136,6 +136,15 @@ The shared vocabulary of this project. Code, prompts, docs, evals and commits us
 
 **MRR** (mean reciprocal rank)
 : The average of 1/rank of the first relevant result per query (1.0 = always first). Rewards putting the right document at the top, not just somewhere in the top *k*.
+
+**MCP server** (Model Context Protocol)
+: A process that exposes tools to any MCP client (Claude Code, an IDE, another agent) through a standard protocol. `sre-kb-mcp` serves the knowledge base tools from the same core as the Runbook Analyst (D50). *Not* a new search: another way in to the same one.
+
+**stdio transport**
+: The client starts the MCP server as a child process and they talk over its standard input and output, like a shell pipe. No network listener; it runs as the local user, so it needs no OAuth. stdout carries only the protocol; logs go to stderr. *Not* Streamable HTTP, the transport for remote servers, which needs OAuth (D50, designed).
+
+**Reader role** (`kb_reader`)
+: The database role search connects as: `SELECT` only and read-only transactions. It enforces read-only below the code, so a bug or a new adapter cannot write (D50).
 
 **Per-document cap**
 : A limit on how many chunks of one document may appear in the top *k* (`max_per_doc`), so one long document cannot fill every slot and the model sees more distinct sources.
