@@ -33,15 +33,8 @@ def _error(msg: str) -> str:
     return json.dumps({"error": msg})
 
 
-@tool(parse_docstring=True)
-def search_runbooks(query: str, doc_type: str | None = None, k: int = 5) -> str:
-    """Search runbooks and past postmortems. Returns the best-matching documents with a short snippet each.
-
-    Args:
-        query: Symptom, exact error line or alert name, e.g. "lookup billing-db failed: no servers could be reached".
-        doc_type: Optional filter: "runbook" or "postmortem".
-        k: Number of documents (max 5).
-    """
+def search_docs(query: str, doc_type: str | None = None, k: int = 5) -> str:
+    """Core of `search_runbooks`, shared by the LangChain tool and other adapters."""
     if doc_type and doc_type not in DOC_TYPES:
         return _error(f"doc_type must be one of {DOC_TYPES}")
     try:
@@ -64,13 +57,8 @@ def search_runbooks(query: str, doc_type: str | None = None, k: int = 5) -> str:
     return json.dumps(rows or {"result": "no matching documents"}, ensure_ascii=False)
 
 
-@tool(parse_docstring=True)
-def get_document(doc_id: str) -> str:
-    """Full text of one runbook or postmortem (sections in order), for its exact procedure or timeline.
-
-    Args:
-        doc_id: Document id from search_runbooks, e.g. RB-008 or PM-007.
-    """
+def fetch_document(doc_id: str) -> str:
+    """Core of `get_document`, shared by the LangChain tool and other adapters."""
     try:
         rows = (
             _conn()
@@ -90,6 +78,28 @@ def get_document(doc_id: str) -> str:
         {"id": doc_id, "title": rows[0][0], "text": body[:DOC_MAX_CHARS]},
         ensure_ascii=False,
     )
+
+
+@tool(parse_docstring=True)
+def search_runbooks(query: str, doc_type: str | None = None, k: int = 5) -> str:
+    """Search runbooks and past postmortems. Returns the best-matching documents with a short snippet each.
+
+    Args:
+        query: Symptom, exact error line or alert name, e.g. "lookup billing-db failed: no servers could be reached".
+        doc_type: Optional filter: "runbook" or "postmortem".
+        k: Number of documents (max 5).
+    """
+    return search_docs(query, doc_type, k)
+
+
+@tool(parse_docstring=True)
+def get_document(doc_id: str) -> str:
+    """Full text of one runbook or postmortem (sections in order), for its exact procedure or timeline.
+
+    Args:
+        doc_id: Document id from search_runbooks, e.g. RB-008 or PM-007.
+    """
+    return fetch_document(doc_id)
 
 
 KNOWLEDGE_TOOLS = [search_runbooks, get_document]
