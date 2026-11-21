@@ -143,3 +143,21 @@ def test_query_set_points_to_existing_documents():
     assert len({q.id for q in queries}) == len(queries)
     for q in queries:
         assert q.relevant and set(q.relevant) <= ids, q.id
+
+
+@pytest.mark.kb
+def test_reader_role_cannot_write(kb_conn):
+    import psycopg
+
+    from sre_agent.knowledge.store import connect_reader
+
+    reader = connect_reader()
+    assert reader.execute("SELECT count(*) FROM kb_chunks").fetchone() is not None
+    for sql in (
+        "DELETE FROM kb_chunks",
+        "CREATE TABLE kb_evil (x int)",
+        "UPDATE kb_chunks SET text = 'x'",
+    ):
+        with pytest.raises(psycopg.errors.Error):
+            reader.execute(sql)
+    reader.close()

@@ -18,6 +18,10 @@ from sre_agent.knowledge.embed import EMBED_DIM
 
 # Local container only (`make kb-up`): trust auth bound to 127.0.0.1, so no password exists.
 DEFAULT_DSN = "postgresql://sre@127.0.0.1:5433/kb"
+# Readers (Runbook Analyst, MCP server) connect as a role that can only SELECT (D50): read-only is
+# enforced by the database grant, not only by which tools exist.
+READER_ROLE = "kb_reader"
+DEFAULT_READER_DSN = f"postgresql://{READER_ROLE}@127.0.0.1:5433/kb"
 RRF_K = 60  # standard reciprocal-rank-fusion constant
 CANDIDATES = 20  # results taken from each ranking before fusion
 # Retrieval defaults chosen by the retrieval eval (D46, amended 2026-11-20: section-plain).
@@ -44,6 +48,19 @@ CREATE TABLE IF NOT EXISTS kb_chunks (
 CREATE INDEX IF NOT EXISTS kb_chunks_tsv ON kb_chunks USING gin (tsv);
 """
 
+READER_GRANTS = f"""
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = '{READER_ROLE}') THEN
+        CREATE ROLE {READER_ROLE} LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOBYPASSRLS;
+    END IF;
+    EXECUTE format('GRANT CONNECT ON DATABASE %I TO {READER_ROLE}', current_database());
+END $$;
+ALTER ROLE {READER_ROLE} SET default_transaction_read_only = on;
+GRANT USAGE ON SCHEMA public TO {READER_ROLE};
+REVOKE ALL ON kb_chunks FROM {READER_ROLE};
+GRANT SELECT ON kb_chunks TO {READER_ROLE};
+"""
+
 
 @dataclass(frozen=True)
 class Hit:
@@ -63,8 +80,18 @@ def connect(dsn: str | None = None) -> psycopg.Connection:
     return conn
 
 
+def connect_reader(dsn: str | None = None) -> psycopg.Connection:
+    """Read-only connection for search: the `kb_reader` role, no DDL (D50)."""
+    conn = psycopg.connect(
+        dsn or os.getenv("KB_READER_DSN", DEFAULT_READER_DSN), autocommit=True
+    )
+    register_vector(conn)
+    return conn
+
+
 def init_schema(conn: psycopg.Connection) -> None:
     conn.execute(SCHEMA)
+    conn.execute(READER_GRANTS)
 
 
 def sync(

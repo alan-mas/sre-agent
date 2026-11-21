@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 from functools import lru_cache
 
 import psycopg
@@ -16,6 +17,8 @@ from sre_agent.knowledge import store
 SNIPPET_CHARS = 700  # per hit: enough for a procedure step, small enough for 5 hits
 DOC_MAX_CHARS = 4000
 DOC_TYPES = ("runbook", "postmortem")
+QUERY_MAX_CHARS = 500  # an error line or a question; longer input is not a search
+DOC_ID_RE = re.compile(r"^(RB|PM)-\d{3}$")
 KB_ERRORS = (psycopg.Error, OSError)  # database down or unreachable
 
 
@@ -26,7 +29,7 @@ def kb_variant() -> str:
 
 @lru_cache(maxsize=1)
 def _conn():
-    return store.connect()
+    return store.connect_reader()
 
 
 def _error(msg: str) -> str:
@@ -35,8 +38,12 @@ def _error(msg: str) -> str:
 
 def search_docs(query: str, doc_type: str | None = None, k: int = 5) -> str:
     """Core of `search_runbooks`, shared by the LangChain tool and other adapters."""
+    if not query.strip() or len(query) > QUERY_MAX_CHARS:
+        return _error(f"query must be 1-{QUERY_MAX_CHARS} characters")
     if doc_type and doc_type not in DOC_TYPES:
         return _error(f"doc_type must be one of {DOC_TYPES}")
+    if k < 1:
+        return _error("k must be at least 1")
     try:
         hits = store.search(
             _conn(), query, variant=kb_variant(), k=20 if doc_type else min(k, 5)
@@ -59,6 +66,8 @@ def search_docs(query: str, doc_type: str | None = None, k: int = 5) -> str:
 
 def fetch_document(doc_id: str) -> str:
     """Core of `get_document`, shared by the LangChain tool and other adapters."""
+    if not DOC_ID_RE.match(doc_id):
+        return _error("doc_id must look like RB-008 or PM-007")
     try:
         rows = (
             _conn()

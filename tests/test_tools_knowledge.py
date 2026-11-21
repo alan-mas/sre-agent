@@ -52,3 +52,19 @@ def test_kb_down_is_a_one_line_error(monkeypatch):
     monkeypatch.setattr(knowledge, "_conn", boom)
     out = json.loads(knowledge.search_runbooks.invoke({"query": "dns"}))
     assert out == {"error": "knowledge base unavailable: ConnectionError"}
+
+
+def test_arguments_are_validated_before_the_database(monkeypatch):
+    def no_db():
+        raise AssertionError("invalid input must not reach the database")
+
+    monkeypatch.setattr(knowledge, "_conn", no_db)
+    for args in (
+        {"query": ""},
+        {"query": "x" * (knowledge.QUERY_MAX_CHARS + 1)},
+        {"query": "dns", "k": 0},
+    ):
+        assert "error" in json.loads(knowledge.search_runbooks.invoke(args))
+    for doc_id in ("RB-8", "rb-008", "RB-008; DROP TABLE kb_chunks", "../etc"):
+        out = json.loads(knowledge.get_document.invoke({"doc_id": doc_id}))
+        assert "error" in out, doc_id
