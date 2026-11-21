@@ -37,8 +37,8 @@ TYPES = {
 BODY_REQUIRED = {"feat", "fix", "perf", "refactor", "revert"}
 KNOWN_SCOPES = {
     "agents", "alerts", "budget", "cli", "deps", "evals", "graph", "hooks",
-    "infra", "k8s", "lab", "llm", "middleware", "postmortem", "prompts", "rbac",
-    "scenarios", "slack", "tools",
+    "infra", "k8s", "knowledge", "lab", "llm", "mcp", "middleware", "postmortem",
+    "prompts", "rbac", "scenarios", "slack", "tools",
 }  # fmt: skip
 
 HEADER_MAX = 72
