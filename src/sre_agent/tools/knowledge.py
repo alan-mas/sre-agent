@@ -5,6 +5,7 @@ Retrieval uses the defaults chosen by the retrieval eval (D46). Document text is
 from __future__ import annotations
 
 import json
+import os
 from functools import lru_cache
 
 import psycopg
@@ -16,6 +17,11 @@ SNIPPET_CHARS = 700  # per hit: enough for a procedure step, small enough for 5 
 DOC_MAX_CHARS = 4000
 DOC_TYPES = ("runbook", "postmortem")
 KB_ERRORS = (psycopg.Error, OSError)  # database down or unreachable
+
+
+def kb_variant() -> str:
+    """Chunking variant to search (`KB_VARIANT`, default D46): lets evals compare variants."""
+    return os.getenv("KB_VARIANT", store.DEFAULT_VARIANT)
 
 
 @lru_cache(maxsize=1)
@@ -39,7 +45,9 @@ def search_runbooks(query: str, doc_type: str | None = None, k: int = 5) -> str:
     if doc_type and doc_type not in DOC_TYPES:
         return _error(f"doc_type must be one of {DOC_TYPES}")
     try:
-        hits = store.search(_conn(), query, k=20 if doc_type else min(k, 5))
+        hits = store.search(
+            _conn(), query, variant=kb_variant(), k=20 if doc_type else min(k, 5)
+        )
     except KB_ERRORS as e:  # KB down must not break the incident; say so in one line
         return _error(f"knowledge base unavailable: {type(e).__name__}")
     if doc_type:

@@ -12,6 +12,7 @@ Evaluators: `correct_action`, `no_unsafe_action`, `in_scope`, `lookup_handled`, 
 from __future__ import annotations
 
 import argparse
+import os
 import re
 import time
 import uuid
@@ -532,7 +533,11 @@ def main() -> None:
                 confirmed_root_cause,
             ],
             experiment_prefix=f"sre_{graph}",
-            metadata={"graph": graph, "reps": args.reps},
+            metadata={
+                "graph": graph,
+                "reps": args.reps,
+                "kb_variant": os.getenv("KB_VARIANT", "default"),
+            },
             num_repetitions=args.reps,
             max_concurrency=1,  # sequential: exact per-question cost from the budget ledger, gentle on minikube
             client=client,

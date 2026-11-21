@@ -15,7 +15,10 @@ def test_search_returns_compact_cited_snippets(monkeypatch):
     monkeypatch.setattr(
         knowledge.store,
         "search",
-        lambda conn, q, k: [_hit("RB-008", "runbook"), _hit("PM-007", "postmortem")],
+        lambda conn, q, variant, k: [
+            _hit("RB-008", "runbook"),
+            _hit("PM-007", "postmortem"),
+        ],
     )
     rows = json.loads(knowledge.search_runbooks.invoke({"query": "no such host"}))
     assert [r["id"] for r in rows] == ["RB-008", "PM-007"]
@@ -27,7 +30,10 @@ def test_search_filters_by_doc_type(monkeypatch):
     monkeypatch.setattr(
         knowledge.store,
         "search",
-        lambda conn, q, k: [_hit("RB-008", "runbook"), _hit("PM-007", "postmortem")],
+        lambda conn, q, variant, k: [
+            _hit("RB-008", "runbook"),
+            _hit("PM-007", "postmortem"),
+        ],
     )
     rows = json.loads(
         knowledge.search_runbooks.invoke({"query": "dns", "doc_type": "postmortem"})

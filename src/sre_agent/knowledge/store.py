@@ -20,8 +20,8 @@ from sre_agent.knowledge.embed import EMBED_DIM
 DEFAULT_DSN = "postgresql://sre@127.0.0.1:5433/kb"
 RRF_K = 60  # standard reciprocal-rank-fusion constant
 CANDIDATES = 20  # results taken from each ranking before fusion
-# Retrieval defaults chosen by the retrieval eval (D46).
-DEFAULT_VARIANT = "fixed"
+# Retrieval defaults chosen by the retrieval eval (D46, amended 2026-11-20: section-plain).
+DEFAULT_VARIANT = "section-plain"
 DEFAULT_MODE = "hybrid"
 DEFAULT_MAX_PER_DOC = 1
 
