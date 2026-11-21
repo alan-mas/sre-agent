@@ -67,7 +67,7 @@ Evaluated with a LangSmith dataset of 11 reproducible cases: six injected failur
 - The evals caught real bugs: a false positive on the healthy control, approvals without justification, and the agent suggesting another workload's image tag "as a hint".
 - **Caveat:** these are single runs (n=1). Repeated runs with variance are on the roadmap.
 
-~70 offline tests (`make test`) cover tools, middleware, safety invariants and the budget guard without calling the LLM.
+~165 offline tests (`make test`) cover tools, middleware, safety invariants, the knowledge base, the MCP server and the budget guard without calling the LLM; the few that need the local cluster or the knowledge base are skipped when it is down.
 
 ## Quickstart
 
