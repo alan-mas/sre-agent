@@ -13,7 +13,7 @@ from sre_agent.budget import BudgetCallbackHandler, BudgetTracker
 Role = Literal["ic", "subagent", "summarizer", "judge", "postmortem"]
 
 _DEFAULTS: dict[Role, tuple[str, str]] = {
-    "ic": ("claude-opus-5-5", "medium"),
+    "ic": ("claude-sonnet-5-5", "medium"),  # D27: matched Opus at ~40% of the cost
     "subagent": ("claude-haiku-5-5", "low"),
     "summarizer": ("claude-haiku-5-5", "low"),
     "judge": ("claude-haiku-5-5", "low"),
