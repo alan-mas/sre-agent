@@ -4,8 +4,8 @@ doc_type: runbook
 title: NetworkPolicy dropping traffic between workloads
 services: []
 alerts: [HighErrorRate, KubeProbeTimeouts]
-scenario: none
-updated: 2026-09-21
+scenario: netpol-deny
+updated: 2026-11-22
 related: [PM-009, RB-008, RB-011]
 synthetic: true
 ---
@@ -24,7 +24,7 @@ Traffic between two workloads stops after a policy change: client connections **
 
 ## Common causes
 - A namespace-wide default-deny without the matching allow rules.
-- An allow rule with a `podSelector` or `namespaceSelector` that matches nothing.
+- An allow rule with a `podSelector` or `namespaceSelector` that matches nothing, or a client that lacks the label the rule expects (compare `kubectl -n <ns> get pods --show-labels` with the rule's `from`).
 - Egress to DNS forgotten, so name lookups time out too.
 
 ## Mitigation

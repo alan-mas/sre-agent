@@ -244,10 +244,33 @@ queries:
     relevant: [RB-001]
     hard: true
 
+  # --- HPA, routes and network policies (added with RB-014 and the lab scenarios of D51) ---
+  - id: q49
+    style: question
+    query: "Our application is experiencing a significant traffic spike, but the Horizontal Pod Autoscaler isn't increasing the replica count despite CPU utilization exceeding its configured target. What could be preventing scaling?"
+    relevant: [RB-014]
+  - id: q50
+    style: log
+    query: "failed to get cpu utilization: missing request for cpu in container api of Pod quote-api-554d8995bd-8t2dz"
+    relevant: [RB-014]
+  - id: q51
+    style: paraphrase
+    query: "the autoscaler shows an unknown target and never adds pods even though the service is busy"
+    relevant: [RB-014, PM-011]
+    hard: true
+  - id: q52
+    style: exact
+    query: "HTTPRoute ResolvedRefs False BackendNotFound"
+    relevant: [RB-013]
+  - id: q53
+    style: log
+    query: "ERROR GET http://inventory-api.demo.svc/readyz failed: download timed out (attempt 3/3)"
+    relevant: [RB-012, PM-009]
+    hard: true
+
 # Questions the knowledge base cannot answer (no runbook or postmortem covers them). Not used
 # for recall@k; kept for the agent eval, where the right answer is "no runbook for this".
 unanswerable:
-  - "Our application is experiencing a significant traffic spike, but the Horizontal Pod Autoscaler isn't increasing the replica count despite CPU utilization exceeding its configured target. What could be preventing scaling?"
   - "We're trying to drain a Kubernetes node during scheduled maintenance, but the operation is blocked by a PodDisruptionBudget. How can we safely proceed without affecting application availability?"
   - "Multiple deployment and operational commands are taking unusually long to execute. We're also seeing intermittent timeouts when communicating with the Kubernetes API server. How should we investigate?"
   - "Several pods across different namespaces are experiencing delayed container startup. Kubernetes reports container runtime errors, but the underlying nodes remain Ready. What could be causing this?"
