@@ -74,7 +74,7 @@ def _specialist(
     redact_secrets: bool = False,
     report: type[BaseModel] = SpecialistReport,
 ) -> object:
-    agent = create_agent(
+    return create_agent(
         model=make_model("subagent"),
         tools=tools,
         system_prompt=system_prompt,
@@ -82,8 +82,6 @@ def _specialist(
         middleware=specialist_stack(redact_secrets),
         name=name,
     )
-    # Agent identity on every child run, so LangSmith can filter and group cost/latency per specialist.
-    return agent.with_config(tags=[f"agent:{name}"], metadata={"agent": name})
 
 
 def _run_specialist(agent, task: str) -> str:
