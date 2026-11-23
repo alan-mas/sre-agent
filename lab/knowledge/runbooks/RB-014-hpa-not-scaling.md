@@ -6,7 +6,7 @@ services: []
 alerts: [KubeHpaMaxedOut, KubeHpaReplicasMismatch, HighLatency]
 scenario: hpa-no-requests
 updated: 2026-11-22
-related: [PM-011, RB-005, RB-013]
+related: [PM-016, PM-011, RB-005, RB-013]
 synthetic: true
 ---
 
@@ -37,4 +37,4 @@ Load or latency rises but the replica count stays flat: the HPA exists, yet `kub
 The team that owns the workload (requests, min/max); the platform team for metrics-server or node capacity.
 
 ## Related
-PM-011 (fixed replica count during a sale), RB-005 (CPU throttling), RB-013 (gateway 5xx under load), RB-004 (pending pods).
+PM-016 (HPA at max during an unannounced event), PM-011 (fixed replica count during a sale), RB-005 (CPU throttling), RB-013 (gateway 5xx under load), RB-004 (pending pods).

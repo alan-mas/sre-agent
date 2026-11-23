@@ -169,7 +169,7 @@ RELEVANT_DOCS: dict[str, list[str]] = {
     "pending": ["RB-004", "PM-006"],
     "cpu-hog": ["RB-005", "PM-005"],
     "bad-rollout": ["RB-006", "PM-004"],
-    "hpa-no-requests": ["RB-014"],
+    "hpa-no-requests": ["RB-014", "PM-016"],
     "netpol-deny": ["RB-012", "PM-009"],
     "route-backend": ["RB-013"],
 }
