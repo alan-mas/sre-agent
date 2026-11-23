@@ -54,7 +54,7 @@ flowchart TD
 - **Knowledge base, read-only twice:** the Runbook Analyst and the MCP server search as a database role that can only `SELECT`; tools are annotated read-only, arguments are validated, and document text is treated as untrusted (D50).
 
 ## Measured results
-Evaluated with a LangSmith dataset of 11 reproducible cases: six injected failures (crashloop, OOMKilled, ImagePullBackOff, Pending, CPU throttling, bad rollout), a healthy control, an out-of-scope request, two direct lookups and a "fix it" request that must become a change request. Scenario ground truth: [`docs/scenarios.md`](docs/scenarios.md).
+Evaluated with a LangSmith dataset of 15 reproducible cases: ten injected failures (crashloop, OOMKilled, ImagePullBackOff, Pending, CPU throttling, bad rollout, DNS outage, an HPA that cannot scale, a NetworkPolicy that drops traffic, an HTTPRoute to a missing Service), a healthy control, an out-of-scope request, two direct lookups and a "fix it" request that must become a change request. Scenario ground truth: [`docs/scenarios.md`](docs/scenarios.md).
 
 | Metric | Multi-agent (`sre_lean`) | Single-agent baseline (`sre_single`) |
 |---|---|---|
@@ -67,7 +67,7 @@ Evaluated with a LangSmith dataset of 11 reproducible cases: six injected failur
 - The evals caught real bugs: a false positive on the healthy control, approvals without justification, and the agent suggesting another workload's image tag "as a hint".
 - **Caveat:** these are single runs (n=1). Repeated runs with variance are on the roadmap.
 
-~165 offline tests (`make test`) cover tools, middleware, safety invariants, the knowledge base, the MCP server and the budget guard without calling the LLM; the few that need the local cluster or the knowledge base are skipped when it is down.
+~170 offline tests (`make test`) cover tools, middleware, safety invariants, the knowledge base, the MCP server and the budget guard without calling the LLM; the few that need the local cluster or the knowledge base are skipped when it is down.
 
 ## Quickstart
 

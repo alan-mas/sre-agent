@@ -51,7 +51,7 @@ def test_runbook_analyst_has_no_cluster_or_write_tools():
 
 def test_single_agent_sees_every_tool(monkeypatch):
     monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-ant-fake")
-    assert len(tool_names(build_single_agent())) == 16 + len(ACTIONS)
+    assert len(tool_names(build_single_agent())) == 19 + len(ACTIONS)
 
 
 def test_prompts_are_static_for_caching():

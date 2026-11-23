@@ -23,6 +23,7 @@ from sre_agent.tools.summaries import (
     summarize_deployment,
     summarize_pod,
 )
+from sre_agent.tools.traffic import TRAFFIC_TOOLS
 
 MAX_ROWS = 50
 
@@ -245,4 +246,5 @@ INSPECTOR_TOOLS = [
     get_events,
     get_nodes,
     get_services,
+    *TRAFFIC_TOOLS,
 ]

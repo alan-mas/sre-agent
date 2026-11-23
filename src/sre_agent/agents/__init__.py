@@ -121,7 +121,7 @@ def _build_commander(graph: str, checkpointer=None):
 
     @tool("k8s_inspector", parse_docstring=True)
     def call_inspector(task: str) -> str:
-        """Delegate to the Kubernetes Inspector: pods, deployments, rollout history, events, nodes, services.
+        """Delegate to the Kubernetes Inspector: pods, deployments, rollout history, events, nodes, services, autoscalers (HPA), routes (HTTPRoute/Ingress), network policies.
 
         Args:
             task: Precise task with namespace, exact resource names and the question to answer.

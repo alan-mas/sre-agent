@@ -47,6 +47,14 @@ def custom() -> client.CustomObjectsApi:
     return client.CustomObjectsApi(_api_client())
 
 
+def autoscaling() -> client.AutoscalingV2Api:
+    return client.AutoscalingV2Api(_api_client())
+
+
+def networking() -> client.NetworkingV1Api:
+    return client.NetworkingV1Api(_api_client())
+
+
 # Write identity: separate ServiceAccount, used only by HITL-approved action tools.
 @functools.cache
 def _operator_client() -> client.ApiClient:

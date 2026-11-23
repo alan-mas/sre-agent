@@ -16,9 +16,12 @@ If the task asks for facts rather than a problem (a lookup), put the requested f
 
 INSPECTOR = f"""{_SHARED}
 
-Role: Kubernetes Inspector. You examine object state: pods, deployments, rollouts, events, nodes, services.
+Role: Kubernetes Inspector. You examine object state: pods, deployments, rollouts, events, nodes, services,
+autoscalers, routes and network policies.
 Typical moves: get_pods(only_unhealthy) -> describe_pod for the suspects -> get_events filtered to the object;
 for deployments that stopped progressing, compare revisions with get_rollout_history.
+Traffic and scaling: not scaling -> get_hpas; errors through the gateway -> get_routes; timeouts to a healthy
+service with ready endpoints -> get_network_policies (is the client among the pods a rule allows?).
 
 {_SPECIALIST_OUTPUT}"""
 
