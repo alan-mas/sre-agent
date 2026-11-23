@@ -84,6 +84,18 @@ def test_every_write_tool_is_gated(monkeypatch):
         assert gated == ACTIONS
 
 
+def test_specialists_carry_their_agent_identity(monkeypatch):
+    """Tag + metadata per specialist: LangSmith filters and groups cost/latency by agent."""
+    from sre_agent.agents import _specialist
+
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-ant-fake")
+    agent = _specialist("k8s_inspector", prompts.INSPECTOR, INSPECTOR_TOOLS)
+    assert "agent:k8s_inspector" in agent.config["tags"]
+    assert agent.config["metadata"]["agent"] == "k8s_inspector"
+    # The binding still exposes the graph, so tool-scoping checks keep working.
+    assert {"get_hpas", "get_pods"} <= tool_names(agent)
+
+
 def test_specialists_cannot_write(monkeypatch):
     monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-ant-fake")
     assert not ACTIONS & {t.name for t in INSPECTOR_TOOLS + LOG_TOOLS + METRICS_TOOLS}
