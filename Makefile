@@ -4,7 +4,7 @@ PROFILE ?= sre-poc
 AGENT_CTX ?= kind-sre-lab
 KCFG_RO := infra/rbac/generated/kubeconfig-agent-readonly
 KCFG_OP := infra/rbac/generated/kubeconfig-agent-operator
-SCENARIOS := crashloop oomkilled imagepullbackoff pending cpu-hog
+SCENARIOS := crashloop oomkilled imagepullbackoff pending cpu-hog hpa-no-requests netpol-deny route-backend
 
 include lab/lab.mk
 
@@ -54,7 +54,7 @@ scenario-bad-rollout: ## Deploy orders-api v1, wait, then roll out broken v2
 	$(LAB_K) apply -f lab/scenarios/bad-rollout-v2.yaml
 
 scenarios-clean: ## Remove all failure scenarios (keeps podinfo)
-	$(LAB_K) delete deploy -n demo -l 'scenario,scenario!=healthy' --ignore-not-found
+	$(LAB_K) delete deploy,svc,hpa,networkpolicy,httproute -n demo -l 'scenario,scenario!=healthy' --ignore-not-found
 
 status: ## Pods in demo
 	$(LAB_K) get pods -n demo -o wide

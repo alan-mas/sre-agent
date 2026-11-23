@@ -28,7 +28,7 @@ def out(*actions):
 
 def test_dataset_covers_every_scenario_once_plus_control():
     scenarios = [e[0] for e in EXAMPLES]
-    assert len(scenarios) == len(set(scenarios)) == 12
+    assert len(scenarios) == len(set(scenarios)) == 15
     assert {"healthy", "out-of-scope", *LOOKUPS, *CONFIG_CHANGES} <= set(scenarios)
     assert [e[3] for e in EXAMPLES if e[3]] == [
         "rollout_undo"

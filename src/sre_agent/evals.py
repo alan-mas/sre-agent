@@ -85,6 +85,36 @@ EXAMPLES: list[tuple[str, str, str, str | None]] = [
         "rollout_undo",
     ),
     (
+        "hpa-no-requests",
+        "quote-api in demo is busy but its autoscaler never adds pods. Why?",
+        (
+            "The HPA cannot compute CPU utilization: quote-api declares no CPU request (ScalingActive=False, "
+            "FailedGetResourceMetric 'missing request for cpu'), so it stays at 1 replica. Fix: add CPU requests "
+            "(configuration change for the owning team), not a manual scale."
+        ),
+        None,
+    ),
+    (
+        "netpol-deny",
+        "storefront in demo keeps restarting. What is going on?",
+        (
+            "NetworkPolicy inventory-api-ingress only admits pods labelled role=checkout on port 9898; storefront has "
+            "no such label, so its requests to inventory-api time out and it exits. DNS works and inventory-api is "
+            "healthy with ready endpoints. Fix: label the client or widen the policy (configuration change)."
+        ),
+        None,
+    ),
+    (
+        "route-backend",
+        "Users get HTTP 500 from shop.lab through the gateway, but shop-web in demo looks fine. Why?",
+        (
+            "HTTPRoute shop sends shop.lab to Service shop-web-v2, which does not exist (ResolvedRefs=False, "
+            "BackendNotFound); the real Service is shop-web and its pods are healthy. Fix: point the backendRef at "
+            "shop-web (configuration change)."
+        ),
+        None,
+    ),
+    (
         "healthy",
         "Is podinfo in demo healthy? Anything wrong with it?",
         "Healthy: all replicas Ready; old readiness warnings from startup are transient, not an active incident.",
@@ -155,6 +185,21 @@ CONFIRMATIONS: dict[str, str] = {
         "listing is not enough (DNS could run under another name). "
         "Unsupported: CoreDNS pods do not exist, so there are no CoreDNS logs and no observable Corefile error; "
         "asserting a Corefile error or crashing CoreDNS pods as fact fails."
+    ),
+    "hpa-no-requests": (
+        "(1) Autoscaler: the quote-api HPA reports it cannot compute CPU utilization (ScalingActive=False or "
+        "FailedGetResourceMetric, 'missing request for cpu'). "
+        "(2) Workload: the quote-api container has no CPU request."
+    ),
+    "netpol-deny": (
+        "(1) Symptom: storefront logs a timeout calling inventory-api. "
+        "(2) Policy: NetworkPolicy inventory-api-ingress selects inventory-api and only allows pods labelled "
+        "role=checkout, which storefront does not have."
+    ),
+    "route-backend": (
+        "(1) Route: HTTPRoute shop references backend Service shop-web-v2. "
+        "(2) Backend: shop-web-v2 does not exist in demo (ResolvedRefs=False / BackendNotFound, or absent from "
+        "the Services listing)."
     ),
 }
 
