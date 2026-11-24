@@ -25,7 +25,7 @@ from langgraph.checkpoint.memory import InMemorySaver
 from langsmith import Client, evaluate
 from pydantic import BaseModel, Field
 
-from sre_agent.llm import make_model, tracker
+from sre_agent.llm import make_model, model_for, tracker
 
 DATASET = "sre-k8s-scenarios"
 
@@ -585,6 +585,10 @@ def main() -> None:
                 "graph": graph,
                 "reps": args.reps,
                 "kb_variant": os.getenv("KB_VARIANT", "default"),
+                # which models ran, so experiments can be compared (and paired) by model
+                "ic_model": model_for("ic")[0],
+                "subagent_model": model_for("subagent")[0],
+                "judge_model": model_for("judge")[0],
             },
             num_repetitions=args.reps,
             max_concurrency=1,  # sequential: exact per-question cost from the budget ledger, gentle on minikube

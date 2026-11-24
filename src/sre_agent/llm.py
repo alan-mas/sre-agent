@@ -30,11 +30,18 @@ def tracker() -> BudgetTracker:
     return _tracker
 
 
+def model_for(role: Role) -> tuple[str, str]:
+    """(model, effort) a role resolves to, after <ROLE>_MODEL / <ROLE>_EFFORT env overrides."""
+    default_model, default_effort = _DEFAULTS[role]
+    return (
+        os.getenv(f"{role.upper()}_MODEL", default_model),
+        os.getenv(f"{role.upper()}_EFFORT", default_effort),
+    )
+
+
 def make_model(role: Role, max_tokens: int = 4096) -> ChatAnthropic:
     """Model for a role; override with <ROLE>_MODEL / <ROLE>_EFFORT env vars (e.g. IC_MODEL)."""
-    default_model, default_effort = _DEFAULTS[role]
-    model = os.getenv(f"{role.upper()}_MODEL", default_model)
-    effort = os.getenv(f"{role.upper()}_EFFORT", default_effort)
+    model, effort = model_for(role)
     return ChatAnthropic(
         model=model,
         max_tokens=max_tokens,
